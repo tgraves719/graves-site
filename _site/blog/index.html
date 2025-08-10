@@ -41,12 +41,13 @@
       content: '';
       position: absolute;
       z-index: -2;
-      left: 50%;
-      top: 50%;
+      left: var(--x, 50%);
+      top: var(--y, 50%);
       width: 250%;
       padding-bottom: 250%;
       transform: translate(-50%, -50%);
       background: conic-gradient(
+        from var(--angle, 0deg),
         #ff2a2a, #ff8000, #ffff00, #40ff00,
         #00ffff, #0080ff, #8000ff, #ff00ff, #ff2a2a
       );
@@ -67,10 +68,53 @@
     .nav-link.active.interactive-rainbow::before {
       opacity: 0.25;
     }
+
+    /* Loading Animation Styles */
+    #loading-overlay {
+      transition: opacity 0.3s ease-in-out;
+    }
+    #explosion-background.exploding {
+      opacity: 1;
+      animation: color-explosion 1.2s forwards;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    @keyframes color-explosion {
+      0% { background: radial-gradient(circle, #ff2a2a 0%, transparent 10%); }
+      20% { background: radial-gradient(circle, #ffff00 20%, #8000ff 40%, transparent 60%); }
+      40% { background: radial-gradient(circle, #00ffff 40%, #ff8000 60%, transparent 80%); }
+      60% { background: radial-gradient(circle, #8000ff 60%, #00ffff 80%, transparent 100%); }
+      80% { background: radial-gradient(circle, #ff2a2a 80%, #ffff00 100%, transparent 120%); }
+      100% { background: transparent; opacity: 0; }
+    }
   </style>
 </head>
 <body class="antialiased">
   <canvas id="bg-canvas"></canvas>
+
+  <div id="explosion-background" class="fixed inset-0 z-[99] pointer-events-none opacity-0"></div>
+
+  <div id="loading-overlay" class="fixed inset-0 z-[100] bg-black/70 flex-col items-center justify-center text-center hidden opacity-0">
+    <div class="flex flex-col items-center gap-4">
+      <div class="text-white text-2xl font-bold tracking-[0.2em] uppercase animate-[pulse_1.5s_infinite_ease-in-out]">Loading...</div>
+      <div class="w-[300px] h-2.5 bg-black/50 rounded-full overflow-hidden">
+        <div id="loading-bar-progress" class="h-full w-0 rounded-full transition-[width] duration-[2000ms] linear" style="background: linear-gradient(90deg, #ff2a2a, #ff8000, #ffff00, #40ff00, #00ffff, #0080ff, #8000ff, #ff00ff); background-size: 200% 200%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="no-vr-modal" class="fixed inset-0 z-[100] bg-black/70 flex items-center justify-center text-center hidden">
+    <div class="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl p-8 max-w-sm mx-4">
+      <h3 class="text-2xl font-bold text-white mb-4 uppercase tracking-wide">No VR Detected</h3>
+      <p class="text-gray-400 mb-6">This experience is designed for WebXR-compatible VR or AR headsets. Please try again on a supported device.</p>
+      <button id="close-no-vr-modal" class="sound-interactive interactive-rainbow px-6 py-3 font-semibold uppercase tracking-wider rounded-lg">Close</button>
+    </div>
+  </div>
+
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
     <!-- Header -->
     <header class="py-6 sticky top-0 z-50 bg-[#0A0A0A]">
@@ -486,6 +530,25 @@
         baseSphereColor: new THREE.Color(0x222222),
         sphereGeometry: null, sphereMaterial: null,
         CHUNK_SIZE: 12, VIEW_DISTANCE: 3,
+        
+        // Enhanced Camera Movement System
+        cameraMovement: {
+          enabled: true,
+          velocity: { x: 0, y: 0, z: 0 },
+          targetPosition: { x: 0, y: 0, z: 2 },
+          currentTarget: { x: 0, y: 0, z: 2 },
+          lastChangeTime: 0,
+          changeInterval: 12000, // Change direction every 12 seconds
+          constraints: {
+            x: { min: -15, max: 15 },
+            y: { min: -10, max: 10 },
+            z: { min: 1, max: 8 }
+          },
+          dampening: 0.92,
+          acceleration: 0.0015,
+          maxSpeed: 0.06,
+          smoothness: 0.02
+        },
 
         init() {
         console.log('🌟 Initializing ThreeDBackground...');
@@ -507,6 +570,16 @@
           this.sphereMaterial = new THREE.MeshBasicMaterial({ color: this.baseSphereColor });
           this.camera.position.z = 2;
           this.cameraTargetPosition.copy(this.camera.position);
+          
+          // Initialize camera movement system
+          this.cameraMovement.currentTarget.x = this.camera.position.x;
+          this.cameraMovement.currentTarget.y = this.camera.position.y;
+          this.cameraMovement.currentTarget.z = this.camera.position.z;
+          this.cameraMovement.targetPosition.x = this.camera.position.x;
+          this.cameraMovement.targetPosition.y = this.camera.position.y;
+          this.cameraMovement.targetPosition.z = this.camera.position.z;
+          this.cameraMovement.lastChangeTime = Date.now();
+          console.log('🎯 Camera movement system initialized');
           this.updateWorldGrid(true);
           console.log('✅ ThreeDBackground initialized, starting animation...');
           
@@ -531,6 +604,76 @@
 
       onMouseMove(event) {
         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      },
+
+      // Enhanced Camera Movement Methods
+      generateRandomTarget() {
+        const movement = this.cameraMovement;
+        const constraints = movement.constraints;
+        
+        // Generate new random target within constraints
+        movement.targetPosition.x = constraints.x.min + Math.random() * (constraints.x.max - constraints.x.min);
+        movement.targetPosition.y = constraints.y.min + Math.random() * (constraints.y.max - constraints.y.min);
+        movement.targetPosition.z = constraints.z.min + Math.random() * (constraints.z.max - constraints.z.min);
+        
+        console.log('🎯 New camera target:', movement.targetPosition);
+      },
+
+      updateCameraMovement() {
+        if (!this.cameraMovement.enabled) return;
+        
+        const movement = this.cameraMovement;
+        const now = Date.now();
+        
+        // Check if it's time to change target
+        if (now - movement.lastChangeTime > movement.changeInterval) {
+          this.generateRandomTarget();
+          movement.lastChangeTime = now;
+        }
+        
+        // Calculate force towards target
+        const forceX = (movement.targetPosition.x - movement.currentTarget.x) * movement.acceleration;
+        const forceY = (movement.targetPosition.y - movement.currentTarget.y) * movement.acceleration;
+        const forceZ = (movement.targetPosition.z - movement.currentTarget.z) * movement.acceleration;
+        
+        // Update velocity with forces
+        movement.velocity.x += forceX;
+        movement.velocity.y += forceY;
+        movement.velocity.z += forceZ;
+        
+        // Apply dampening
+        movement.velocity.x *= movement.dampening;
+        movement.velocity.y *= movement.dampening;
+        movement.velocity.z *= movement.dampening;
+        
+        // Constrain velocity to max speed
+        const speed = Math.sqrt(movement.velocity.x ** 2 + movement.velocity.y ** 2 + movement.velocity.z ** 2);
+        if (speed > movement.maxSpeed) {
+          const scale = movement.maxSpeed / speed;
+          movement.velocity.x *= scale;
+          movement.velocity.y *= scale;
+          movement.velocity.z *= scale;
+        }
+        
+        // Update current target position
+        movement.currentTarget.x += movement.velocity.x;
+        movement.currentTarget.y += movement.velocity.y;
+        movement.currentTarget.z += movement.velocity.z;
+        
+        // Apply mouse parallax as secondary influence
+        const parallaxInput = this.mouse.x;
+        const parallaxStrength = 0.3;
+        const parallaxX = parallaxInput * parallaxStrength;
+        
+        // Smooth interpolation to final camera position
+        const finalX = movement.currentTarget.x + parallaxX;
+        const finalY = movement.currentTarget.y;
+        const finalZ = movement.currentTarget.z;
+        
+        this.camera.position.lerp(
+          new THREE.Vector3(finalX, finalY, finalZ), 
+          movement.smoothness
+        );
       },
 
       generateChunk(chunkX, chunkY, chunkZ) {
@@ -662,11 +805,15 @@
           sphere.material.color.lerp(finalColor, 0.2);
         });
         
-        const parallaxInput = this.mouse.x;
-        const parallaxStrength = 0.25;
-        const targetX = this.cameraTargetPosition.x + (parallaxInput * parallaxStrength);
-        this.camera.position.lerp(new THREE.Vector3(targetX, this.cameraTargetPosition.y, this.cameraTargetPosition.z), 0.05);
-          this.renderer.render(this.scene, this.camera);
+        // Enhanced camera movement with physics-based randomization
+        this.updateCameraMovement();
+        
+        // Update interactive effects in same loop (performance optimization)
+        if (window.InteractiveEffects) {
+          InteractiveEffects.updateElements();
+        }
+        
+        this.renderer.render(this.scene, this.camera);
         }
       };
       
@@ -834,9 +981,14 @@
         playClickSound() { if (this.isEnabled) { this.synths.click?.triggerAttackRelease('G3', '0.5'); this.synths.highClick?.triggerAttackRelease('G5', '0.5'); } }
       }
 
-      // Initialize sound engine
+      // Initialize sound engine (non-blocking)
       const soundEngine = new SoundEngine();
-      await soundEngine.setup();
+      // Setup sound engine asynchronously without blocking other systems
+      soundEngine.setup().then(() => {
+        console.log('🎵 Sound engine ready');
+      }).catch(error => {
+        console.warn('🎵 Sound engine setup failed:', error);
+      });
 
       // Mobile Menu System
       const MobileMenu = {
@@ -890,6 +1042,301 @@
           const mobileMenu = document.getElementById('mobile-menu');
           mobileMenu.classList.remove('hidden');
           mobileMenu.classList.add('flex');
+        }
+      };
+
+      // Advanced Interactive Effects System
+      const InteractiveEffects = {
+        rainbowElements: [],
+        
+        init() {
+          this.rainbowElements = Array.from(document.querySelectorAll('.interactive-rainbow'));
+          
+          // Initialize each rainbow element with physics data
+          this.rainbowElements.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            Object.assign(el.dataset, {
+              angle: '0',
+              x: rect.width / 2,
+              y: rect.height / 2,
+              targetX: rect.width / 2,
+              targetY: rect.height / 2,
+              velocityX: '0',
+              velocityY: '0'
+            });
+            
+            // Set initial CSS custom properties
+            el.style.setProperty('--x', `${rect.width / 2}px`);
+            el.style.setProperty('--y', `${rect.height / 2}px`);
+            el.style.setProperty('--angle', '0deg');
+            
+            // Add mouse event listeners
+            el.addEventListener('mouseenter', (e) => this.onMouseEnter(e));
+            el.addEventListener('mouseleave', (e) => this.onMouseLeave(e));
+            el.addEventListener('mousemove', (e) => this.onMouseMove(e));
+          });
+          
+          // Make globally available for shared animation loop
+          window.InteractiveEffects = this;
+          
+          // Invalidate cached rects on window resize
+          window.addEventListener('resize', () => {
+            this.rainbowElements.forEach(el => {
+              delete el._cachedRect;
+            });
+          });
+          
+          console.log('✨ Interactive Effects initialized with', this.rainbowElements.length, 'elements (using shared animation loop)');
+        },
+        
+        onMouseEnter(e) {
+          const el = e.currentTarget;
+          this.updateRainbowTarget(el, e);
+        },
+        
+        onMouseLeave(e) {
+          const el = e.currentTarget;
+          this.resetRainbowTarget(el);
+        },
+        
+        onMouseMove(e) {
+          const el = e.currentTarget;
+          this.updateRainbowTarget(el, e);
+        },
+        
+        updateRainbowTarget(el, e) {
+          // Optimized: Cache rect and use physics object directly
+          if (!el._cachedRect) {
+            el._cachedRect = el.getBoundingClientRect();
+          }
+          if (el._physics) {
+            el._physics.targetX = e.clientX - el._cachedRect.left;
+            el._physics.targetY = e.clientY - el._cachedRect.top;
+          }
+        },
+        
+        resetRainbowTarget(el) {
+          if (!el._cachedRect) {
+            el._cachedRect = el.getBoundingClientRect();
+          }
+          if (el._physics) {
+            el._physics.targetX = el._cachedRect.width / 2;
+            el._physics.targetY = el._cachedRect.height / 2;
+          }
+        },
+        
+        animate() {
+          // Optimized: Use single animation loop shared with 3D background
+          this.updateElements();
+        },
+        
+        updateElements() {
+          // Optimized: Process elements only when needed, reduce DOM operations
+          this.rainbowElements.forEach(el => {
+            // Use numeric properties instead of dataset strings
+            if (!el._physics) {
+              el._physics = {
+                angle: 0,
+                x: parseFloat(el.dataset.x),
+                y: parseFloat(el.dataset.y),
+                targetX: parseFloat(el.dataset.targetX),
+                targetY: parseFloat(el.dataset.targetY),
+                velocityX: 0,
+                velocityY: 0
+              };
+            }
+            
+            const p = el._physics;
+            
+            // Update angle (continuous rotation)
+            p.angle += 0.5;
+            
+            // Physics-based movement towards target
+            const forceX = (p.targetX - p.x) * 0.01;
+            const forceY = (p.targetY - p.y) * 0.01;
+            
+            p.velocityX = (p.velocityX + forceX) * 0.92;
+            p.velocityY = (p.velocityY + forceY) * 0.92;
+            
+            p.x += p.velocityX;
+            p.y += p.velocityY;
+            
+            // Batch DOM updates - only update CSS properties
+            el.style.setProperty('--angle', `${p.angle}deg`);
+            el.style.setProperty('--x', `${p.x}px`);
+            el.style.setProperty('--y', `${p.y}px`);
+          });
+        },
+        
+        setupDeviceOrientation() {
+          // Only for mobile devices
+          if (!('ontouchstart' in window)) return;
+          
+          // Request permission for iOS devices
+          if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission()
+              .then(permissionState => {
+                if (permissionState === 'granted') {
+                  window.addEventListener('deviceorientation', (e) => this.onDeviceMove(e));
+                  console.log('📱 Device orientation enabled');
+                }
+              })
+              .catch(console.error);
+          } else {
+            // For Android and other devices
+            window.addEventListener('deviceorientation', (e) => this.onDeviceMove(e));
+            console.log('📱 Device orientation enabled');
+          }
+        },
+        
+        onDeviceMove(event) {
+          if (event.gamma === null) return;
+          
+          // Convert gamma (left-right tilt) to a normalized value
+          const tilt = Math.max(-60, Math.min(60, event.gamma));
+          const normalizedTilt = tilt / 60; // Range: -1 to 1
+          
+          // Apply subtle device tilt effect to all rainbow elements
+          this.rainbowElements.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const offsetX = centerX + (normalizedTilt * rect.width * 0.3);
+            
+            // Update target position based on device orientation
+            el.dataset.targetX = Math.max(0, Math.min(rect.width, offsetX)).toString();
+          });
+        }
+      };
+
+      // Loading Animation System
+      const LoadingSystem = {
+        isActive: false,
+        
+        async showLoadingAnimation(options = {}) {
+          if (this.isActive) return Promise.resolve();
+          
+          const {
+            duration = 2000,
+            showExplosion = true,
+            playMusic = true,
+            message = 'Loading...',
+            callback = null
+          } = options;
+          
+          this.isActive = true;
+          
+          const loadingOverlay = document.getElementById('loading-overlay');
+          const explosionBg = document.getElementById('explosion-background');
+          const progressBar = document.getElementById('loading-bar-progress');
+          const loadingText = loadingOverlay.querySelector('.text-white');
+          
+          if (!loadingOverlay || !explosionBg || !progressBar) {
+            console.warn('Loading elements not found');
+            this.isActive = false;
+            return Promise.resolve();
+          }
+          
+          // Update loading message
+          loadingText.textContent = message;
+          
+          // Show loading overlay
+          loadingOverlay.classList.remove('hidden');
+          loadingOverlay.classList.add('flex');
+          
+          // Show explosion background if requested
+          if (showExplosion) {
+            explosionBg.classList.add('exploding');
+          }
+          
+          // Fade in overlay
+          setTimeout(() => {
+            loadingOverlay.style.opacity = '1';
+            progressBar.style.width = '100%';
+          }, 10);
+          
+          // Play musical accompaniment
+          if (playMusic && soundEngine && soundEngine.isEnabled) {
+            this.playLoadingMusic();
+          }
+          
+          // Return promise that resolves when loading is complete
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              // Fade out
+              loadingOverlay.style.opacity = '0';
+              
+              setTimeout(() => {
+                // Hide elements
+                loadingOverlay.classList.add('hidden');
+                loadingOverlay.classList.remove('flex');
+                explosionBg.classList.remove('exploding');
+                progressBar.style.width = '0%';
+                
+                this.isActive = false;
+                
+                // Execute callback if provided
+                if (callback) {
+                  callback();
+                }
+                
+                resolve();
+              }, 150);
+            }, duration);
+          });
+        },
+        
+        playLoadingMusic() {
+          if (!soundEngine || !soundEngine.isEnabled) return;
+          
+          const now = Tone.now();
+          
+          // Play musical sequence inspired by the original
+          const loadingNotes = ['C4', 'E4', 'G4', 'C5', 'G4', 'E4', 'C4', 'G3'];
+          
+          loadingNotes.forEach((note, index) => {
+            setTimeout(() => {
+              if (soundEngine.synths.melody) {
+                soundEngine.synths.melody.triggerAttackRelease(note, '16n');
+                
+                // Trigger visual pulse in background
+                if (AppState.visualQueue) {
+                  AppState.visualQueue.push(note);
+                }
+              }
+            }, index * 200);
+          });
+          
+          // Add some sparkle with the high click synth
+          setTimeout(() => {
+            if (soundEngine.synths.highClick) {
+              ['C6', 'E6', 'G6'].forEach((note, index) => {
+                setTimeout(() => {
+                  soundEngine.synths.highClick.triggerAttackRelease(note, '32n');
+                }, index * 150);
+              });
+            }
+          }, 800);
+        },
+        
+        // Quick loading for page transitions
+        showQuickLoading(message = 'Transitioning...') {
+          return this.showLoadingAnimation({
+            duration: 600,
+            showExplosion: false,
+            playMusic: false,
+            message
+          });
+        },
+        
+        // Full loading with all effects
+        showFullLoading(message = 'Loading...', callback = null) {
+          return this.showLoadingAnimation({
+            duration: 1200,
+            showExplosion: true,
+            playMusic: true,
+            message,
+            callback
+          });
         }
       };
 
@@ -1070,14 +1517,28 @@
 
       // Setup event listeners - ensure sound engine is setup first
       soundToggleBtn.addEventListener('click', async () => {
-        if (!soundEngine.isSetup) {
-          console.log('🎵 Setting up sound engine...');
-          await soundEngine.setup();
+        try {
+          if (!soundEngine.isSetup) {
+            console.log('🎵 Setting up sound engine...');
+            await soundEngine.setup();
+          }
+          
+          // Explicitly handle first-time activation
+          if (!soundEngine.isEnabled) {
+            soundEngine.enable();
+            console.log('🔊 Sound enabled on first click');
+          } else {
+            soundEngine.disable();
+            console.log('🔇 Sound disabled');
+          }
+          
+          // Update UI
+          const isEnabled = soundEngine.isEnabled;
+          soundOnIcon.classList.toggle('hidden', !isEnabled);
+          soundOffIcon.classList.toggle('hidden', isEnabled);
+        } catch (error) {
+          console.error('❌ Sound toggle failed:', error);
         }
-        
-        const isEnabled = soundEngine.toggle();
-        soundOnIcon.classList.toggle('hidden', !isEnabled);
-        soundOffIcon.classList.toggle('hidden', isEnabled);
       });
 
       // Sound interaction events
@@ -1095,27 +1556,24 @@
 
       document.body.addEventListener('click', e => {
         if (e.target.closest('.sound-interactive')) {
-          console.log('🔊 Sound interactive element clicked:', e.target.closest('.sound-interactive'));
-          console.log('🎬 Background state before click - renderer:', !!ThreeDBackground.renderer, 'chunks:', ThreeDBackground.worldGrid.size);
+          // Optimized: Minimal logging, immediate sound response
           soundEngine.playClickSound();
-          
-          // Check background state after click
-          setTimeout(() => {
-            console.log('🎬 Background state after click - renderer:', !!ThreeDBackground.renderer, 'chunks:', ThreeDBackground.worldGrid.size);
-          }, 100);
         }
       });
 
-      // Reality Engine Button
+      // Reality Engine Button with Loading System
       const realityEngineBtn = document.getElementById('reality-engine-btn');
+      const noVrModal = document.getElementById('no-vr-modal');
+      const closeNoVrModalBtn = document.getElementById('close-no-vr-modal');
+      
       if (realityEngineBtn) {
         realityEngineBtn.addEventListener('click', async (e) => {
           e.preventDefault();
           
-          // Enable audio context
+          // Enable audio context if not already enabled
           if (!AppState.isSoundEnabled) {
-            await soundEngine.enable();
-            AppState.isSoundEnabled = true;
+            await soundEngine.setup();
+            soundEngine.enable();
             document.getElementById('sound-off-icon').classList.add('hidden');
             document.getElementById('sound-on-icon').classList.remove('hidden');
           }
@@ -1123,16 +1581,38 @@
           // Play click sound
           soundEngine.playClickSound();
           
-          // Trigger visual pulse
-          if (ThreeDBackground && ThreeDBackground.scene) {
-            const randomNote = CHROMATIC_SCALE[Math.floor(Math.random() * CHROMATIC_SCALE.length)];
-            AppState.visualQueue.push(randomNote + '4');
-          }
-          
-          // Optional: Navigate to work section after a brief delay
-          setTimeout(() => {
-            PageManager.showPage('work');
-          }, 500);
+          // Show full loading animation with WebXR checking
+          await LoadingSystem.showFullLoading('Initializing Reality Engine...', async () => {
+            try {
+              // Check for WebXR support
+              if (navigator.xr && await navigator.xr.isSessionSupported('immersive-vr')) {
+                console.log('✅ WebXR VR session supported');
+                // In a real implementation, this would start the WebXR session
+                // For now, we'll just show success and navigate to work
+                window.location.href = '/work/';
+              } else {
+                console.log('❌ WebXR not supported');
+                // Show VR not detected modal
+                if (noVrModal) {
+                  noVrModal.classList.remove('hidden');
+                }
+              }
+            } catch (error) {
+              console.warn('WebXR check failed:', error);
+              // Show VR not detected modal
+              if (noVrModal) {
+                noVrModal.classList.remove('hidden');
+              }
+            }
+          });
+        });
+      }
+      
+      // Close VR Modal
+      if (closeNoVrModalBtn && noVrModal) {
+        closeNoVrModalBtn.addEventListener('click', () => {
+          noVrModal.classList.add('hidden');
+          soundEngine.playClickSound();
         });
       }
 
@@ -1219,6 +1699,11 @@
             
             // Reinitialize page-specific functionality
             this.initializePageSpecificScripts();
+            
+            // Reinitialize interactive effects for new elements
+            if (typeof InteractiveEffects !== 'undefined') {
+              InteractiveEffects.init();
+            }
             
             // Fade in new content
             overlay.style.opacity = '0';
@@ -1434,6 +1919,10 @@
       
       console.log('📱 Initializing Mobile Menu...');
       MobileMenu.init();
+      
+      console.log('✨ Initializing Interactive Effects...');
+      InteractiveEffects.init();
+      InteractiveEffects.setupDeviceOrientation();
       
       console.log('⚙️ Initializing page-specific scripts...');
       PageTransition.initializePageSpecificScripts();
