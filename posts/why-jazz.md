@@ -2,7 +2,7 @@
 layout: post.njk
 title: "Why Jazz? A History of Innovation"
 date: 2019-03-15
-image: "images/pic07.jpg"
+image: "images/pic04.jpg"
 tags:
   - Music
   - History
