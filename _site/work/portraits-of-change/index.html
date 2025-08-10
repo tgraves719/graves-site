@@ -334,11 +334,11 @@
         mouse: { x: 0, y: 0 },
         baseSphereColor: new THREE.Color(0x222222),
         sphereGeometry: null, sphereMaterial: null,
-        CHUNK_SIZE: 12, VIEW_DISTANCE: 3,
+        CHUNK_SIZE: 12, VIEW_DISTANCE: 2, // Reduced from 3 to 2 for better performance
         
         // Enhanced Camera Movement System
         cameraMovement: {
-          enabled: true,
+          enabled: true, // Camera movement enabled for page transitions
           velocity: { x: 0, y: 0, z: 0 },
           targetPosition: { x: 0, y: 0, z: 2 },
           currentTarget: { x: 0, y: 0, z: 2 },
@@ -432,7 +432,7 @@
         
         // Check if it's time to change target
         if (now - movement.lastChangeTime > movement.changeInterval) {
-          this.generateRandomTarget();
+          // this.generateRandomTarget(); // Disabled for better navigation
           movement.lastChangeTime = now;
         }
         
@@ -493,7 +493,7 @@
         const chunkSpheres = [];
         const offset = { x: chunkX * this.CHUNK_SIZE, y: chunkY * this.CHUNK_SIZE, z: chunkZ * this.CHUNK_SIZE };
         const octave = (chunkX % 8 + 8) % 8 + 2;
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 2; i++) { // Reduced from 3 to 2 spheres per chunk
           const sphere = new THREE.Mesh(this.sphereGeometry, this.sphereMaterial.clone());
           const noteIndex = Math.floor(Math.random() * 12);
           sphere.position.set(
@@ -597,7 +597,7 @@
           if (sphere.userData.activePulses.length > 0) {
             sphere.userData.activePulses = sphere.userData.activePulses.filter(pulse => {
               const age = now - pulse.startTime;
-              const maxAge = 1500;
+              const maxAge = 400;
               if (age < maxAge) {
                 const intensity = (1.0 - (age / maxAge)) * pulse.intensity;
                 finalColor.add(pulse.color.clone().multiplyScalar(intensity));
@@ -607,7 +607,7 @@
             });
           }
           
-          sphere.material.color.lerp(finalColor, 0.2);
+          sphere.material.color.lerp(finalColor, 0.6);
         });
         
         // Enhanced camera movement with physics-based randomization
@@ -791,6 +791,10 @@
       // Setup sound engine asynchronously without blocking other systems
       soundEngine.setup().then(() => {
         console.log('🎵 Sound engine ready');
+        // Set melody for current page after sound engine is ready
+        if (AppState.isSoundEnabled) {
+          soundEngine.setMelodyForPage(AppState.activePage);
+        }
       }).catch(error => {
         console.warn('🎵 Sound engine setup failed:', error);
       });
@@ -833,8 +837,7 @@
           
           // INSTANT visual feedback
           if (AppState.visualQueue) {
-            AppState.visualQueue.push('A4');
-            setTimeout(() => AppState.visualQueue.push('D4'), 100);
+            // Visual effects handled by melody system
           }
           
           // Play sound feedback
@@ -1110,10 +1113,7 @@
               if (soundEngine.synths.melody) {
                 soundEngine.synths.melody.triggerAttackRelease(note, '16n');
                 
-                // Trigger visual pulse in background
-                if (AppState.visualQueue) {
-                  AppState.visualQueue.push(note);
-                }
+                // Visual pulses handled by melody system only
               }
             }, index * 200);
           });
@@ -1279,7 +1279,7 @@
             AppState.activePage = 'blog';
           }
           
-          soundEngine.setMelodyForPage(AppState.activePage);
+          // Melody will be set when sound engine is ready and enabled
           
           // Load blog content if on blog page
           if (AppState.activePage === 'blog') {
@@ -1368,14 +1368,7 @@
 
       document.body.addEventListener('click', e => {
         if (e.target.closest('.sound-interactive')) {
-          // INSTANT visual feedback - trigger background pulse immediately
-          if (AppState.visualQueue) {
-            AppState.visualQueue.push('C4'); // Instant visual pulse
-            setTimeout(() => AppState.visualQueue.push('G4'), 150);
-            setTimeout(() => AppState.visualQueue.push('E4'), 300);
-          }
-          
-          // Sound response (async, won't block visual)
+          // Only play click sound, let melody system handle visuals
           soundEngine.playClickSound();
         }
       });
@@ -1389,14 +1382,7 @@
         realityEngineBtn.addEventListener('click', async (e) => {
           e.preventDefault();
           
-          // INSTANT visual feedback - trigger background explosion immediately
-          if (AppState.visualQueue) {
-            // Powerful burst sequence for Reality Engine
-            const engineNotes = ['C4', 'E4', 'G4', 'C5', 'E5', 'G5'];
-            engineNotes.forEach((note, index) => {
-              setTimeout(() => AppState.visualQueue.push(note), index * 80);
-            });
-          }
+          // Visual effects will be handled by melody system
           
           // INSTANT visual feedback - start loading animation immediately  
           const loadingPromise = LoadingSystem.showFullLoading('Initializing Reality Engine...');
@@ -1408,6 +1394,8 @@
               soundEngine.enable();
               document.getElementById('sound-off-icon').classList.add('hidden');
               document.getElementById('sound-on-icon').classList.remove('hidden');
+              // Set melody for current page after enabling sound
+              soundEngine.setMelodyForPage(AppState.activePage);
             }
             soundEngine.playClickSound();
           })();
@@ -1703,6 +1691,10 @@
               
               const currentPos = startPos.clone().lerp(endPos, easedProgress);
               ThreeDBackground.cameraTargetPosition.copy(currentPos);
+              // Also update the movement system target for smooth transition
+              ThreeDBackground.cameraMovement.targetPosition.x = currentPos.x;
+              ThreeDBackground.cameraMovement.targetPosition.y = currentPos.y;
+              ThreeDBackground.cameraMovement.targetPosition.z = currentPos.z;
               
               if (progress < 1) {
                 requestAnimationFrame(animateCamera);
@@ -1711,15 +1703,7 @@
             
             animateCamera();
             
-            // Add some visual flair - trigger sphere pulses during camera movement
-            setTimeout(() => {
-              const randomNotes = ['C4', 'E4', 'G4', 'B4'];
-              randomNotes.forEach((note, index) => {
-                setTimeout(() => {
-                  AppState.visualQueue.push(note);
-                }, index * 200);
-              });
-            }, 300);
+            // Visual effects handled by melody system only
           }
         },
         
@@ -1739,16 +1723,16 @@
                 const harmonicNote = note.replace('4', '3'); // Drop an octave
                 setTimeout(() => AppState.visualQueue.push(harmonicNote), 50);
               }
-            }, index * 80);
+            }, index * 40);
           });
           
           // Add a cascading wave effect after the rapid sequence
           setTimeout(() => {
             const waveNotes = ['G5', 'E5', 'C5', 'A4', 'F4', 'D4'];
             waveNotes.forEach((note, index) => {
-              setTimeout(() => AppState.visualQueue.push(note), index * 120);
+              setTimeout(() => AppState.visualQueue.push(note), index * 60);
             });
-          }, 600);
+          }, 320);
         }
       };
 
