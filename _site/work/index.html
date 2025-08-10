@@ -75,7 +75,7 @@
     }
     #explosion-background.exploding {
       opacity: 1;
-      animation: color-explosion 1.2s forwards;
+      animation: color-explosion 0.8s forwards;
     }
 
     @keyframes pulse {
@@ -161,7 +161,7 @@
   <h2 class="text-3xl tracking-tight mb-12 uppercase font-bold text-white" style="letter-spacing: 0.1em;">Featured Work</h2>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
     <a href="/work/portraits-of-change/" class="card sound-interactive interactive-rainbow bg-[var(--color-bg-card)] rounded-xl overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-lg hover:shadow-purple-900/10">
-      <img src="images/pic27.jpg" alt="Image for Portraits of Change" class="w-full h-56 object-cover">
+      <img src="/images/pic27.jpg" alt="Image for Portraits of Change" class="w-full h-56 object-cover">
       <div class="p-6 flex-grow flex flex-col">
         <h3 class="text-xl font-bold text-white mb-2 uppercase tracking-wide">Portraits of Change</h3>
         <p class="text-gray-400 mb-4 flex-grow">A music-technology project that bends reality, creating visual wonders driven by harmonic information captured from live music in real-time.</p>
@@ -173,7 +173,7 @@
     </a>
     
     <a href="/work/conductvr/" class="card sound-interactive interactive-rainbow bg-[var(--color-bg-card)] rounded-xl overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-lg hover:shadow-purple-900/10">
-      <img src="images/pic26.jpg" alt="Banner for ConductVR" class="w-full h-56 object-cover">
+      <img src="/images/pic26.jpg" alt="Banner for ConductVR" class="w-full h-56 object-cover">
       <div class="p-6 flex-grow flex flex-col">
         <h3 class="text-xl font-bold text-white mb-2 uppercase tracking-wide">ConductVR</h3>
         <p class="text-gray-400 mb-4 flex-grow">An educational VR application designed to teach and practice standard conducting patterns in an immersive, interactive environment.</p>
@@ -185,7 +185,7 @@
     </a>
 
     <a href="/work/musicbox/" class="card sound-interactive interactive-rainbow bg-[var(--color-bg-card)] rounded-xl overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-lg hover:shadow-purple-900/10">
-      <img src="images/pic05.jpg" alt="Image for The Modular Music Box" class="w-full h-56 object-cover">
+      <img src="/images/pic05.jpg" alt="Image for The Modular Music Box" class="w-full h-56 object-cover">
       <div class="p-6 flex-grow flex flex-col">
         <h3 class="text-xl font-bold text-white mb-2 uppercase tracking-wide">The Modular Music Box</h3>
         <p class="text-gray-400 mb-4 flex-grow">An audiovisual instrument for exploring harmony and geometry. Generate notes from scales, or build harmonies by stacking musical intervals.</p>
@@ -197,7 +197,7 @@
     </a>
 
     <a href="/work/musicstand/" class="card sound-interactive interactive-rainbow bg-[var(--color-bg-card)] rounded-xl overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-lg hover:shadow-purple-900/10">
-      <img src="images/pic06.jpg" alt="Image for The Virtual Music Stand" class="w-full h-56 object-cover">
+      <img src="/images/pic06.jpg" alt="Image for The Virtual Music Stand" class="w-full h-56 object-cover">
       <div class="p-6 flex-grow flex flex-col">
         <h3 class="text-xl font-bold text-white mb-2 uppercase tracking-wide">The Virtual Music Stand</h3>
         <p class="text-gray-400 mb-4 flex-grow">A cross-platform PDF reader for sheet music, evolving from HoloLens 2 to Quest 3 for the next generation of XR devices.</p>
@@ -797,6 +797,12 @@
           mobileMenu.classList.toggle('hidden');
           mobileMenu.classList.toggle('flex');
           
+          // INSTANT visual feedback
+          if (AppState.visualQueue) {
+            AppState.visualQueue.push('A4');
+            setTimeout(() => AppState.visualQueue.push('D4'), 100);
+          }
+          
           // Play sound feedback
           if (soundEngine && soundEngine.isEnabled) {
             soundEngine.playClickSound();
@@ -981,10 +987,11 @@
 
       // Loading Animation System
       const LoadingSystem = {
-        isActive: false,
+        activeAnimations: new Set(),
         
         async showLoadingAnimation(options = {}) {
-          if (this.isActive) return Promise.resolve();
+          const animationId = Date.now() + Math.random();
+          this.activeAnimations.add(animationId);
           
           const {
             duration = 2000,
@@ -994,7 +1001,7 @@
             callback = null
           } = options;
           
-          this.isActive = true;
+          // Each animation has its own ID, no global blocking
           
           const loadingOverlay = document.getElementById('loading-overlay');
           const explosionBg = document.getElementById('explosion-background');
@@ -1003,7 +1010,7 @@
           
           if (!loadingOverlay || !explosionBg || !progressBar) {
             console.warn('Loading elements not found');
-            this.isActive = false;
+            this.activeAnimations.delete(animationId);
             return Promise.resolve();
           }
           
@@ -1043,7 +1050,7 @@
                 explosionBg.classList.remove('exploding');
                 progressBar.style.width = '0%';
                 
-                this.isActive = false;
+                this.activeAnimations.delete(animationId);
                 
                 // Execute callback if provided
                 if (callback) {
@@ -1102,7 +1109,7 @@
         // Full loading with all effects
         showFullLoading(message = 'Loading...', callback = null) {
           return this.showLoadingAnimation({
-            duration: 1200,
+            duration: 800,
             showExplosion: true,
             playMusic: true,
             message,
@@ -1327,7 +1334,14 @@
 
       document.body.addEventListener('click', e => {
         if (e.target.closest('.sound-interactive')) {
-          // Optimized: Minimal logging, immediate sound response
+          // INSTANT visual feedback - trigger background pulse immediately
+          if (AppState.visualQueue) {
+            AppState.visualQueue.push('C4'); // Instant visual pulse
+            setTimeout(() => AppState.visualQueue.push('G4'), 150);
+            setTimeout(() => AppState.visualQueue.push('E4'), 300);
+          }
+          
+          // Sound response (async, won't block visual)
           soundEngine.playClickSound();
         }
       });
@@ -1341,41 +1355,62 @@
         realityEngineBtn.addEventListener('click', async (e) => {
           e.preventDefault();
           
-          // Enable audio context if not already enabled
-          if (!AppState.isSoundEnabled) {
-            await soundEngine.setup();
-            soundEngine.enable();
-            document.getElementById('sound-off-icon').classList.add('hidden');
-            document.getElementById('sound-on-icon').classList.remove('hidden');
+          // INSTANT visual feedback - trigger background explosion immediately
+          if (AppState.visualQueue) {
+            // Powerful burst sequence for Reality Engine
+            const engineNotes = ['C4', 'E4', 'G4', 'C5', 'E5', 'G5'];
+            engineNotes.forEach((note, index) => {
+              setTimeout(() => AppState.visualQueue.push(note), index * 80);
+            });
           }
           
-          // Play click sound
-          soundEngine.playClickSound();
+          // INSTANT visual feedback - start loading animation immediately  
+          const loadingPromise = LoadingSystem.showFullLoading('Initializing Reality Engine...');
           
-          // Show full loading animation with WebXR checking
-          await LoadingSystem.showFullLoading('Initializing Reality Engine...', async () => {
+          // PARALLEL execution - all these happen while animation runs
+          const soundSetupPromise = (async () => {
+            if (!AppState.isSoundEnabled) {
+              await soundEngine.setup();
+              soundEngine.enable();
+              document.getElementById('sound-off-icon').classList.add('hidden');
+              document.getElementById('sound-on-icon').classList.remove('hidden');
+            }
+            soundEngine.playClickSound();
+          })();
+          
+          const pagePreloadPromise = fetch('/work/');
+          
+          const webxrCheckPromise = (async () => {
             try {
-              // Check for WebXR support
               if (navigator.xr && await navigator.xr.isSessionSupported('immersive-vr')) {
                 console.log('✅ WebXR VR session supported');
-                // In a real implementation, this would start the WebXR session
-                // For now, we'll just show success and navigate to work
-                window.location.href = '/work/';
+                return { hasVR: true };
               } else {
                 console.log('❌ WebXR not supported');
-                // Show VR not detected modal
-                if (noVrModal) {
-                  noVrModal.classList.remove('hidden');
-                }
+                return { hasVR: false };
               }
             } catch (error) {
-              console.warn('WebXR check failed:', error);
-              // Show VR not detected modal
-              if (noVrModal) {
-                noVrModal.classList.remove('hidden');
-              }
+              console.error('WebXR check failed:', error);
+              return { hasVR: false };
             }
-          });
+          })();
+          
+          // Wait for all parallel operations to complete
+          const [loadingResult, soundResult, pageResult, webxrResult] = await Promise.all([
+            loadingPromise,
+            soundSetupPromise, 
+            pagePreloadPromise,
+            webxrCheckPromise
+          ]);
+          
+          // Navigate immediately after loading animation completes
+          if (webxrResult.hasVR) {
+            window.location.href = '/work/';
+          } else {
+            if (noVrModal) {
+              noVrModal.classList.remove('hidden');
+            }
+          }
         });
       }
       
@@ -1392,7 +1427,9 @@
         isTransitioning: false,
         
         async navigateToPage(url, pushState = true) {
-          if (this.isTransitioning) return;
+          if (this.isTransitioning) {
+            console.log('📄 Navigation already in progress, allowing concurrent requests');
+          }
           this.isTransitioning = true;
           
           try {
