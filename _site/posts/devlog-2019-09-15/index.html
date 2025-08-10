@@ -95,7 +95,7 @@
         <a href="mailto:hello@thomasgraves.art" class="sound-interactive hidden md:inline-block interactive-rainbow px-6 py-3 font-semibold uppercase tracking-wider rounded-lg">Contact</a>
       </nav>
     </header>
-    <main>
+    <main id="main-content" class="transition-opacity duration-300 ease-in-out">
       
       <div class="py-8">
         <section class="py-16">
@@ -121,6 +121,9 @@
       </div>
       
     </main>
+    
+    <!-- Loading overlay for transitions -->
+    <div id="page-transition-overlay" class="fixed inset-0 bg-[#0A0A0A] z-50 opacity-0 pointer-events-none transition-opacity duration-300"></div>
     <footer id="page-footer" class="text-center py-12 mt-16 border-t border-[var(--color-border)]">
       <p class="text-gray-500">&copy; 2025 Thomas Graves. All Rights Reserved.</p>
     </footer>
@@ -172,7 +175,244 @@
       wholeToneDirection: 1,
     };
 
+    // Function to wait for libraries to load
+    function waitForLibraries() {
+      return new Promise((resolve) => {
+        function checkLibraries() {
+          if (typeof THREE !== 'undefined' && typeof Tone !== 'undefined') {
+            console.log('✅ All libraries loaded');
+            resolve();
+          } else {
+            console.log('⏳ Waiting for libraries... THREE:', typeof THREE !== 'undefined', 'Tone:', typeof Tone !== 'undefined');
+            setTimeout(checkLibraries, 100);
+          }
+        }
+        checkLibraries();
+      });
+    }
+
+    // 3D Background System - WILL BE CREATED AFTER LIBRARIES LOAD
+    let ThreeDBackground = null;
+
     document.addEventListener('DOMContentLoaded', async () => {
+      console.log('📄 DOM Content Loaded');
+      
+      // Wait for external libraries to load
+      await waitForLibraries();
+      
+      console.log('🔧 Creating 3D Background system...');
+      
+      // NOW create the ThreeDBackground object with THREE.js available
+      ThreeDBackground = {
+        scene: null, camera: null, renderer: null, worldGrid: new Map(),
+        cameraTargetPosition: new THREE.Vector3(0, 0, 2),
+        mouse: { x: 0, y: 0 },
+        baseSphereColor: new THREE.Color(0x222222),
+        sphereGeometry: null, sphereMaterial: null,
+        CHUNK_SIZE: 12, VIEW_DISTANCE: 3,
+
+        init() {
+        console.log('🌟 Initializing ThreeDBackground...');
+        
+        const canvas = document.getElementById('bg-canvas');
+        if (!canvas) {
+          console.error('❌ Canvas not available for ThreeJS initialization');
+          return;
+        }
+        
+        try {
+          this.scene = new THREE.Scene();
+          this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+          this.renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+          this.renderer.setSize(window.innerWidth, window.innerHeight);
+          console.log('🖥️ Renderer created - canvas size:', canvas.width, 'x', canvas.height, 'window size:', window.innerWidth, 'x', window.innerHeight);
+          this.scene.fog = new THREE.Fog(0x0A0A0A, 20, 80);
+          this.sphereGeometry = new THREE.SphereGeometry(0.15, 16, 16);
+          this.sphereMaterial = new THREE.MeshBasicMaterial({ color: this.baseSphereColor });
+          this.camera.position.z = 2;
+          this.cameraTargetPosition.copy(this.camera.position);
+          this.updateWorldGrid(true);
+          console.log('✅ ThreeDBackground initialized, starting animation...');
+          
+          // Force first render and start animation loop
+          this.renderer.render(this.scene, this.camera);
+          this.animate();
+          
+          window.addEventListener('resize', () => this.onWindowResize());
+          document.addEventListener('mousemove', (e) => this.onMouseMove(e));
+          
+          console.log('🎬 Animation loop started, spheres should be visible');
+        } catch (error) {
+          console.error('❌ ThreeDBackground initialization failed:', error);
+        }
+      },
+
+      onWindowResize() {
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+      },
+
+      onMouseMove(event) {
+        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      },
+
+      generateChunk(chunkX, chunkY, chunkZ) {
+        const key = `${chunkX},${chunkY},${chunkZ}`;
+        if (this.worldGrid.has(key)) {
+          console.log('🔄 Chunk already exists:', key);
+          return;
+        }
+        
+        console.log('🎲 Generating chunk:', key, 'at offset:', chunkX * this.CHUNK_SIZE, chunkY * this.CHUNK_SIZE, chunkZ * this.CHUNK_SIZE);
+        
+        const chunkSpheres = [];
+        const offset = { x: chunkX * this.CHUNK_SIZE, y: chunkY * this.CHUNK_SIZE, z: chunkZ * this.CHUNK_SIZE };
+        const octave = (chunkX % 8 + 8) % 8 + 2;
+        for (let i = 0; i < 3; i++) {
+          const sphere = new THREE.Mesh(this.sphereGeometry, this.sphereMaterial.clone());
+          const noteIndex = Math.floor(Math.random() * 12);
+          sphere.position.set(
+            offset.x + (Math.random() - 0.5) * this.CHUNK_SIZE,
+            offset.y + (Math.random() - 0.5) * this.CHUNK_SIZE,
+            offset.z + (Math.random() - 0.5) * this.CHUNK_SIZE
+          );
+          sphere.userData = {
+            noteName: CHROMATIC_SCALE[noteIndex] + octave,
+            noteBase: CHROMATIC_SCALE[noteIndex],
+            activePulses: [],
+          };
+          this.scene.add(sphere);
+          chunkSpheres.push(sphere);
+        }
+        this.worldGrid.set(key, chunkSpheres);
+        console.log('✅ Chunk generated:', key, 'with', chunkSpheres.length, 'spheres. Total chunks:', this.worldGrid.size);
+      },
+
+      removeChunk(key) {
+        if (!this.worldGrid.has(key)) return;
+        this.worldGrid.get(key).forEach(sphere => {
+          this.scene.remove(sphere);
+          sphere.material.dispose();
+        });
+        this.worldGrid.delete(key);
+      },
+
+      triggerVisualPulse(noteName) {
+        const noteBase = noteName.replace(/\d/g, '');
+        const color = new THREE.Color(NOTE_COLORS[noteBase] || 0xffffff);
+        this.worldGrid.forEach(chunk => {
+          chunk.forEach(sphere => {
+            if (sphere.userData.noteBase === noteBase) {
+              this.lightUpSphereWave(sphere, color, 0);
+            }
+          });
+        });
+      },
+
+      lightUpSphereWave(sphere, color, generation) {
+        if (generation > 2) return;
+        sphere.userData.activePulses.push({
+          color,
+          startTime: Date.now(),
+          intensity: 0.6 - (generation * 0.2)
+        });
+        const allVisibleSpheres = Array.from(this.worldGrid.values()).flat();
+        const neighbors = allVisibleSpheres.map(other => ({
+          sphere: other,
+          dist: sphere.position.distanceTo(other.position)
+        })).filter(item => item.sphere !== sphere && item.dist < this.CHUNK_SIZE / 2)
+          .sort((a, b) => a.dist - b.dist)
+          .slice(0, 4)
+          .map(item => item.sphere);
+        
+        setTimeout(() => {
+          neighbors.forEach(neighbor => this.lightUpSphereWave(neighbor, color, generation + 1));
+        }, 150);
+      },
+
+      updateWorldGrid(isInitialLoad = false) {
+        const camChunk = {
+          x: Math.round(this.camera.position.x / this.CHUNK_SIZE),
+          y: Math.round(this.camera.position.y / this.CHUNK_SIZE),
+          z: Math.round(this.camera.position.z / this.CHUNK_SIZE),
+        };
+        for (let x = camChunk.x - this.VIEW_DISTANCE; x <= camChunk.x + this.VIEW_DISTANCE; x++) {
+          for (let y = camChunk.y - this.VIEW_DISTANCE; y <= camChunk.y + this.VIEW_DISTANCE; y++) {
+            for (let z = camChunk.z - this.VIEW_DISTANCE; z <= camChunk.z + this.VIEW_DISTANCE; z++) {
+              this.generateChunk(x, y, z);
+            }
+          }
+        }
+      },
+
+      animate() {
+        requestAnimationFrame(() => this.animate());
+        
+        // Log every 60 frames (roughly every second)
+        if (!this.frameCount) this.frameCount = 0;
+        this.frameCount++;
+        if (this.frameCount % 60 === 0) {
+          console.log('🎬 Animation frame', this.frameCount, '- chunks:', this.worldGrid.size, 'spheres visible:', Array.from(this.worldGrid.values()).flat().length);
+        }
+        
+        // Process visual queue from melody system
+        while (AppState.visualQueue.length > 0) {
+          const note = AppState.visualQueue.shift();
+          this.triggerVisualPulse(note);
+        }
+        
+        this.updateWorldGrid();
+        
+        // Update sphere colors based on active pulses
+        const now = Date.now();
+        const allSpheres = Array.from(this.worldGrid.values()).flat();
+        allSpheres.forEach(sphere => {
+          let finalColor = this.baseSphereColor.clone();
+          
+          if (sphere.userData.activePulses.length > 0) {
+            sphere.userData.activePulses = sphere.userData.activePulses.filter(pulse => {
+              const age = now - pulse.startTime;
+              const maxAge = 1500;
+              if (age < maxAge) {
+                const intensity = (1.0 - (age / maxAge)) * pulse.intensity;
+                finalColor.add(pulse.color.clone().multiplyScalar(intensity));
+                return true;
+              }
+              return false;
+            });
+          }
+          
+          sphere.material.color.lerp(finalColor, 0.2);
+        });
+        
+        const parallaxInput = this.mouse.x;
+        const parallaxStrength = 0.25;
+        const targetX = this.cameraTargetPosition.x + (parallaxInput * parallaxStrength);
+        this.camera.position.lerp(new THREE.Vector3(targetX, this.cameraTargetPosition.y, this.cameraTargetPosition.z), 0.05);
+          this.renderer.render(this.scene, this.camera);
+        }
+      };
+      
+      // FIRST: Initialize 3D Background immediately - completely independent of audio
+      console.log('🚀 Starting initialization sequence...');
+      
+      // Get DOM elements - ensure they exist
+      const soundToggleBtn = document.getElementById('sound-toggle');
+      const soundOnIcon = document.getElementById('sound-on-icon');
+      const soundOffIcon = document.getElementById('sound-off-icon');
+      const canvas = document.getElementById('bg-canvas');
+      
+      // Ensure canvas exists before proceeding
+      if (!canvas) {
+        console.error('❌ Canvas element not found!');
+        return;
+      }
+      
+      // Initialize 3D Background FIRST, before sound engine
+      console.log('🌟 Initializing 3D Background (BEFORE audio)...');
+      ThreeDBackground.init();
+      
       // Sound Engine Class
       class SoundEngine {
         constructor() {
@@ -496,175 +736,14 @@
           }).join('');
         }
       };
-      
-      // Get DOM elements
-      const soundToggleBtn = document.getElementById('sound-toggle');
-      const soundOnIcon = document.getElementById('sound-on-icon');
-      const soundOffIcon = document.getElementById('sound-off-icon');
-      const canvas = document.getElementById('bg-canvas');
-      
-      // 3D Background System (simplified)
-      const ThreeDBackground = {
-        scene: null, camera: null, renderer: null, worldGrid: new Map(),
-        cameraTargetPosition: new THREE.Vector3(0, 0, 2),
-        mouse: { x: 0, y: 0 },
-        baseSphereColor: new THREE.Color(0x222222),
-        sphereGeometry: null, sphereMaterial: null,
-        CHUNK_SIZE: 12, VIEW_DISTANCE: 3,
 
-        init() {
-          console.log('🌟 Initializing ThreeDBackground...');
-          this.scene = new THREE.Scene();
-          this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-          this.renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
-          this.renderer.setSize(window.innerWidth, window.innerHeight);
-          this.scene.fog = new THREE.Fog(0x0A0A0A, 20, 80);
-          this.sphereGeometry = new THREE.SphereGeometry(0.15, 16, 16);
-          this.sphereMaterial = new THREE.MeshBasicMaterial({ color: this.baseSphereColor });
-          this.camera.position.z = 2;
-          this.cameraTargetPosition.copy(this.camera.position);
-          this.updateWorldGrid(true);
-          console.log('✅ ThreeDBackground initialized, starting animation...');
-          this.animate();
-          window.addEventListener('resize', () => this.onWindowResize());
-          document.addEventListener('mousemove', (e) => this.onMouseMove(e));
-        },
-
-        onWindowResize() {
-          this.camera.aspect = window.innerWidth / window.innerHeight;
-          this.camera.updateProjectionMatrix();
-          this.renderer.setSize(window.innerWidth, window.innerHeight);
-        },
-
-        onMouseMove(event) {
-          this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        },
-
-        generateChunk(chunkX, chunkY, chunkZ) {
-          const key = `${chunkX},${chunkY},${chunkZ}`;
-          if (this.worldGrid.has(key)) return;
-          const chunkSpheres = [];
-          const offset = { x: chunkX * this.CHUNK_SIZE, y: chunkY * this.CHUNK_SIZE, z: chunkZ * this.CHUNK_SIZE };
-          const octave = (chunkX % 8 + 8) % 8 + 2;
-          for (let i = 0; i < 3; i++) {
-            const sphere = new THREE.Mesh(this.sphereGeometry, this.sphereMaterial.clone());
-            const noteIndex = Math.floor(Math.random() * 12);
-            sphere.position.set(
-              offset.x + (Math.random() - 0.5) * this.CHUNK_SIZE,
-              offset.y + (Math.random() - 0.5) * this.CHUNK_SIZE,
-              offset.z + (Math.random() - 0.5) * this.CHUNK_SIZE
-            );
-            sphere.userData = {
-              noteName: CHROMATIC_SCALE[noteIndex] + octave,
-              noteBase: CHROMATIC_SCALE[noteIndex],
-              activePulses: [],
-            };
-            this.scene.add(sphere);
-            chunkSpheres.push(sphere);
-          }
-          this.worldGrid.set(key, chunkSpheres);
-        },
-
-        removeChunk(key) {
-          if (!this.worldGrid.has(key)) return;
-          this.worldGrid.get(key).forEach(sphere => {
-            this.scene.remove(sphere);
-            sphere.material.dispose();
-          });
-          this.worldGrid.delete(key);
-        },
-
-        triggerVisualPulse(noteName) {
-          const noteBase = noteName.replace(/\d/g, '');
-          const color = new THREE.Color(NOTE_COLORS[noteBase] || 0xffffff);
-          this.worldGrid.forEach(chunk => {
-            chunk.forEach(sphere => {
-              if (sphere.userData.noteBase === noteBase) {
-                this.lightUpSphereWave(sphere, color, 0);
-              }
-            });
-          });
-        },
-
-        lightUpSphereWave(sphere, color, generation) {
-          if (generation > 2) return;
-          sphere.userData.activePulses.push({
-            color,
-            startTime: Date.now(),
-            intensity: 0.6 - (generation * 0.2)
-          });
-          const allVisibleSpheres = Array.from(this.worldGrid.values()).flat();
-          const neighbors = allVisibleSpheres.map(other => ({
-            sphere: other,
-            dist: sphere.position.distanceTo(other.position)
-          })).filter(item => item.sphere !== sphere && item.dist < this.CHUNK_SIZE / 2)
-            .sort((a, b) => a.dist - b.dist)
-            .slice(0, 4)
-            .map(item => item.sphere);
-          
-          setTimeout(() => {
-            neighbors.forEach(neighbor => this.lightUpSphereWave(neighbor, color, generation + 1));
-          }, 150);
-        },
-
-        updateWorldGrid(isInitialLoad = false) {
-          const camChunk = {
-            x: Math.round(this.camera.position.x / this.CHUNK_SIZE),
-            y: Math.round(this.camera.position.y / this.CHUNK_SIZE),
-            z: Math.round(this.camera.position.z / this.CHUNK_SIZE),
-          };
-          for (let x = camChunk.x - this.VIEW_DISTANCE; x <= camChunk.x + this.VIEW_DISTANCE; x++) {
-            for (let y = camChunk.y - this.VIEW_DISTANCE; y <= camChunk.y + this.VIEW_DISTANCE; y++) {
-              for (let z = camChunk.z - this.VIEW_DISTANCE; z <= camChunk.z + this.VIEW_DISTANCE; z++) {
-                this.generateChunk(x, y, z);
-              }
-            }
-          }
-        },
-
-        animate() {
-          requestAnimationFrame(() => this.animate());
-          
-          // Process visual queue from melody system
-          while (AppState.visualQueue.length > 0) {
-            const note = AppState.visualQueue.shift();
-            this.triggerVisualPulse(note);
-          }
-          
-          this.updateWorldGrid();
-          
-          // Update sphere colors based on active pulses
-          const now = Date.now();
-          const allSpheres = Array.from(this.worldGrid.values()).flat();
-          allSpheres.forEach(sphere => {
-            let finalColor = this.baseSphereColor.clone();
-            
-            if (sphere.userData.activePulses.length > 0) {
-              sphere.userData.activePulses = sphere.userData.activePulses.filter(pulse => {
-                const age = now - pulse.startTime;
-                const maxAge = 1500;
-                if (age < maxAge) {
-                  const intensity = (1.0 - (age / maxAge)) * pulse.intensity;
-                  finalColor.add(pulse.color.clone().multiplyScalar(intensity));
-                  return true;
-                }
-                return false;
-              });
-            }
-            
-            sphere.material.color.lerp(finalColor, 0.2);
-          });
-          
-          const parallaxInput = this.mouse.x;
-          const parallaxStrength = 0.25;
-          const targetX = this.cameraTargetPosition.x + (parallaxInput * parallaxStrength);
-          this.camera.position.lerp(new THREE.Vector3(targetX, this.cameraTargetPosition.y, this.cameraTargetPosition.z), 0.05);
-          this.renderer.render(this.scene, this.camera);
-        }
-      };
-
-      // Setup event listeners
+      // Setup event listeners - ensure sound engine is setup first
       soundToggleBtn.addEventListener('click', async () => {
+        if (!soundEngine.isSetup) {
+          console.log('🎵 Setting up sound engine...');
+          await soundEngine.setup();
+        }
+        
         const isEnabled = soundEngine.toggle();
         soundOnIcon.classList.toggle('hidden', !isEnabled);
         soundOffIcon.classList.toggle('hidden', isEnabled);
@@ -685,7 +764,14 @@
 
       document.body.addEventListener('click', e => {
         if (e.target.closest('.sound-interactive')) {
+          console.log('🔊 Sound interactive element clicked:', e.target.closest('.sound-interactive'));
+          console.log('🎬 Background state before click - renderer:', !!ThreeDBackground.renderer, 'chunks:', ThreeDBackground.worldGrid.size);
           soundEngine.playClickSound();
+          
+          // Check background state after click
+          setTimeout(() => {
+            console.log('🎬 Background state after click - renderer:', !!ThreeDBackground.renderer, 'chunks:', ThreeDBackground.worldGrid.size);
+          }, 100);
         }
       });
 
@@ -719,9 +805,334 @@
         });
       }
 
-      // Initialize
-      ThreeDBackground.init();
+      // Page Transition System
+      const PageTransition = {
+        isTransitioning: false,
+        
+        async navigateToPage(url, pushState = true) {
+          if (this.isTransitioning) return;
+          this.isTransitioning = true;
+          
+          try {
+            // Show loading overlay
+            const overlay = document.getElementById('page-transition-overlay');
+            const mainContent = document.getElementById('main-content');
+            
+            overlay.style.pointerEvents = 'all';
+            overlay.style.opacity = '0.3';
+            mainContent.style.opacity = '0.7';
+            
+            // Fetch new page content
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Failed to load page');
+            
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Extract the new content and title
+            const newMainContent = doc.querySelector('main');
+            const newTitle = doc.querySelector('title')?.textContent || 'Thomas Graves';
+            
+            if (!newMainContent) throw new Error('Invalid page structure');
+            
+            // Update page title and URL
+            document.title = newTitle;
+            if (pushState) {
+              history.pushState({ url }, '', url);
+            }
+            
+            // Trigger visual transition effects
+            this.triggerTransitionEffects();
+            
+            // Fade out completely
+            mainContent.style.opacity = '0';
+            
+            // Wait for fade out (faster)
+            await new Promise(resolve => setTimeout(resolve, 150));
+            
+            // Replace content
+            mainContent.innerHTML = newMainContent.innerHTML;
+            mainContent.className = newMainContent.className;
+            
+            // Update active page for music and camera
+            const path = url;
+            let newPageId;
+            if (path.includes('/work')) {
+              newPageId = 'work';
+            } else if (path.includes('/about')) {
+              newPageId = 'about';  
+            } else if (path.includes('/blog')) {
+              newPageId = 'blog';
+            } else {
+              newPageId = 'hero';
+            }
+            
+            AppState.activePage = newPageId;
+            
+            // Set new melody for the page (music continues seamlessly)
+            soundEngine.setMelodyForPage(AppState.activePage);
+            
+            // Animate camera to new page position
+            this.animateCameraForPage(newPageId);
+            
+            // Load blog content if needed
+            if (AppState.activePage === 'blog') {
+              PageManager.loadBlogContent();
+            }
+            
+            // Reinitialize page-specific functionality
+            this.initializePageSpecificScripts();
+            
+            // Fade in new content
+            overlay.style.opacity = '0';
+            mainContent.style.opacity = '1';
+            
+            // Clean up overlay (faster)
+            setTimeout(() => {
+              overlay.style.pointerEvents = 'none';
+            }, 200);
+            
+          } catch (error) {
+            console.error('Navigation error:', error);
+            // Fallback to normal navigation
+            window.location.href = url;
+          } finally {
+            this.isTransitioning = false;
+          }
+        },
+        
+        init() {
+          // Intercept navigation clicks
+          document.addEventListener('click', (e) => {
+            const link = e.target.closest('a[href]');
+            if (!link) return;
+            
+            const href = link.getAttribute('href');
+            
+            // Only intercept internal links
+            if (!href || href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('#')) {
+              return;
+            }
+            
+            // Don't intercept if ctrl/cmd/shift clicked (user wants new tab)
+            if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+            
+            e.preventDefault();
+            this.navigateToPage(href);
+          });
+          
+          // Handle browser back/forward buttons
+          window.addEventListener('popstate', (e) => {
+            if (e.state && e.state.url) {
+              this.navigateToPage(e.state.url, false);
+            } else {
+              this.navigateToPage(window.location.pathname, false);
+            }
+          });
+          
+          // Store initial state
+          history.replaceState({ url: window.location.pathname }, '', window.location.pathname);
+        },
+        
+        initializePageSpecificScripts() {
+          // Initialize project page toggle functionality
+          this.initProjectPageToggles();
+        },
+        
+        initProjectPageToggles() {
+          // Development log data for Portraits of Change
+          const devlogData = [
+            { id: '2021-05-15', title: 'Devlog: Trumpet Test in MR', date: 'May 15, 2021', videoId: 'jM_3Ma0daAA', text: "Check out our latest trumpet test in mixed reality! A little Haydn in color.", tags: ['Devlog', 'Portraits of Change'] },
+            { id: '2021-04-15', title: 'Devlog: VFX MIDI Tests', date: 'April 15, 2021', videoId: 'l-iUqews7Q0', text: "This video contains a collection of different effects I've made for Portraits. In this 2D Unity scene, I can test different MIDI driven VFX without needing VR. There isn't sound, but these effects are being driven by my MIDI keyboard in real-time.", tags: ['Devlog', 'Portraits of Change'] },
+            { id: '2021-04-12', title: 'Devlog: University Demo', date: 'April 12, 2021', videoId: 'xYRqNQzCxVM', text: "I got to bring my VR/AR rig down to my university to demonstrate a VR conducting app I have been working on for a class, and couldn't help myself in sharing some Portraits stuff as well!", tags: ['Devlog', 'Update'] },
+            { id: '2020-04-27', title: 'Devlog: Coronavirus Update', date: 'April 27, 2020', videoId: 'RUBBKnUVU-s', text: "Well, that happened. Coronavirus has altered our way of life, and the performing arts have suffered. The prospects of live music performance are not looking great...", tags: ['Devlog', 'Update'] },
+            { id: '2020-03-27', title: 'Devlog: SteamVR Tracking', date: 'March 27, 2020', videoId: 'C5lcmrWpCXE', text: "We have upgraded to SteamVR tracking! With the addition of the Index headset to our mixed reality arsenal, we can start prototyping AR pass-through with the ZED mini and LEAP motion sensor.", tags: ['Devlog', 'Hardware'] },
+            { id: '2020-02-05', title: 'Devlog: Multi-Instrument Harmony', date: 'February 5, 2020', videoId: 'FFIsxg-flIg', text: "I managed to get a recording with our session pianist Noah Suazo. It was a really great experience and really rich to finally see some multi instrument harmony in action.", tags: ['Devlog', 'Milestone'] },
+            { id: '2020-01-09', title: 'Devlog: Trumpet Module', date: 'January 9, 2020', videoId: 'IxDf7hlPQLw', text: "This is where things get good. A little over a full year has past and we have a fully functioning trumpet module working! 0.2.5 will also be our first multi-instrument supported version.", tags: ['Devlog', 'Milestone'] },
+            { id: '2019-09-15', title: 'Devlog: Post-Festival Update', date: 'September 15, 2019', videoId: 'VPJgtfEtFgQ', text: "With the What If... Festival wrapped up, we are bunkering down to develop our MIDI conversion system after all this time researching and prototyping on piano.", tags: ['Devlog', 'Event'] },
+            { id: '2019-08-25', title: 'Devlog: AR MIDI Color Test', date: 'August 25, 2019', videoId: 'Q6Wat4iVT-M', text: "We have been hard at work testing our MIDI color system in augmented reality, while still polishing the VR experience for our upcoming events.", tags: ['Devlog', 'AR'] },
+            { id: '2019-07-11', title: 'Devlog: Fundraising & First Event', date: 'July 11, 2019', videoId: 'NMaVNASWMLU', text: "July Update- It has been a busy summer for Portraits of Change! We have officially reached our first fundraising milestone- to raise $1000!", tags: ['Devlog', 'Update'] },
+            { id: '2019-04-15', title: 'Devlog: Initial Prototype', date: 'April 15, 2019', videoId: '3-ZnpXlRGYI', text: "We had made some breakthroughs in developing an initial prototype of the idea of incorporating VR/AR into a live music performance.", tags: ['Devlog', 'Prototype'] }
+          ];
+
+          // Get toggle elements
+          const devlogBtn = document.getElementById('toggle-devlog-btn');
+          const collaboratorsBtn = document.getElementById('toggle-collaborators-btn');
+          const devlogSection = document.getElementById('devlog-section');
+          const collaboratorsSection = document.getElementById('collaborators-section');
+          const devlogGrid = document.getElementById('devlog-grid');
+
+          // Populate devlog grid if it exists
+          if (devlogGrid && devlogGrid.children.length === 0) {
+            devlogGrid.innerHTML = devlogData.map(entry => `
+              <div class="bg-[var(--color-bg-card)] border border-[var(--color-border)] p-4 flex flex-col rounded-lg group">
+                <div class="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden mb-3 bg-black">
+                  <img src="https://img.youtube.com/vi/${entry.videoId}/hqdefault.jpg" alt="Thumbnail for ${entry.title}" class="w-full h-full object-cover">
+                </div>
+                <p class="text-xs text-gray-500 mb-2">${entry.date}</p>
+                <h4 class="font-bold text-md text-white mb-3 uppercase tracking-wide flex-grow">${entry.title}</h4>
+                <p class="text-gray-400 text-sm mb-3">${entry.text}</p>
+                <a href="https://www.youtube.com/watch?v=${entry.videoId}" target="_blank" class="text-indigo-400 text-sm font-semibold hover:text-indigo-300 mt-auto">Watch Video &rarr;</a>
+              </div>
+            `).join('');
+          }
+
+          // Remove any existing event listeners to prevent duplicates
+          if (devlogBtn) {
+            devlogBtn.replaceWith(devlogBtn.cloneNode(true));
+            const newDevlogBtn = document.getElementById('toggle-devlog-btn');
+            newDevlogBtn.addEventListener('click', () => {
+              const isHidden = devlogSection.classList.contains('hidden');
+              devlogSection.classList.toggle('hidden');
+              newDevlogBtn.textContent = isHidden ? 'Hide Development Log' : 'View Development Log';
+              
+              if (!isHidden && collaboratorsSection && !collaboratorsSection.classList.contains('hidden')) {
+                collaboratorsSection.classList.add('hidden');
+                if (collaboratorsBtn) collaboratorsBtn.textContent = 'View Collaborators';
+              }
+            });
+          }
+
+          if (collaboratorsBtn) {
+            collaboratorsBtn.replaceWith(collaboratorsBtn.cloneNode(true));
+            const newCollaboratorsBtn = document.getElementById('toggle-collaborators-btn');
+            newCollaboratorsBtn.addEventListener('click', () => {
+              const isHidden = collaboratorsSection.classList.contains('hidden');
+              collaboratorsSection.classList.toggle('hidden');
+              newCollaboratorsBtn.textContent = isHidden ? 'Hide Collaborators' : 'View Collaborators';
+              
+              if (!isHidden && devlogSection && !devlogSection.classList.contains('hidden')) {
+                devlogSection.classList.add('hidden');
+                if (devlogBtn) document.getElementById('toggle-devlog-btn').textContent = 'View Development Log';
+              }
+            });
+          }
+        },
+        
+        animateCameraForPage(pageId) {
+          // Define camera positions for different pages (more dynamic than original)
+          const cameraPositions = {
+            'hero': { x: 0, y: 0, z: 2 },
+            'work': { x: -2, y: 1, z: 3 },
+            'about': { x: 2, y: -1, z: 4 },
+            'blog': { x: 0, y: 2, z: 3 }
+          };
+          
+          const targetPos = cameraPositions[pageId] || cameraPositions['hero'];
+          
+          if (ThreeDBackground && ThreeDBackground.cameraTargetPosition) {
+            // Smooth camera transition over 1 second (faster like original)
+            const startPos = ThreeDBackground.cameraTargetPosition.clone();
+            const endPos = new THREE.Vector3(targetPos.x, targetPos.y, targetPos.z);
+            
+            let startTime = Date.now();
+            const duration = 1000; // 1 second
+            
+            const animateCamera = () => {
+              const elapsed = Date.now() - startTime;
+              const progress = Math.min(elapsed / duration, 1);
+              
+              // Use easeInOutCubic for smooth animation
+              const easedProgress = progress < 0.5 
+                ? 4 * progress * progress * progress 
+                : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+              
+              const currentPos = startPos.clone().lerp(endPos, easedProgress);
+              ThreeDBackground.cameraTargetPosition.copy(currentPos);
+              
+              if (progress < 1) {
+                requestAnimationFrame(animateCamera);
+              }
+            };
+            
+            animateCamera();
+            
+            // Add some visual flair - trigger sphere pulses during camera movement
+            setTimeout(() => {
+              const randomNotes = ['C4', 'E4', 'G4', 'B4'];
+              randomNotes.forEach((note, index) => {
+                setTimeout(() => {
+                  AppState.visualQueue.push(note);
+                }, index * 200);
+              });
+            }, 300);
+          }
+        },
+        
+        triggerTransitionEffects() {
+          if (!ThreeDBackground || !ThreeDBackground.scene) return;
+          
+          // Create a dramatic visual effect during page transitions
+          const effectNotes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
+          
+          // Trigger rapid fire note pulses in sequence
+          effectNotes.forEach((note, index) => {
+            setTimeout(() => {
+              AppState.visualQueue.push(note);
+              
+              // Add some extra intensity by triggering multiple related notes
+              if (index % 2 === 0) {
+                const harmonicNote = note.replace('4', '3'); // Drop an octave
+                setTimeout(() => AppState.visualQueue.push(harmonicNote), 50);
+              }
+            }, index * 80);
+          });
+          
+          // Add a cascading wave effect after the rapid sequence
+          setTimeout(() => {
+            const waveNotes = ['G5', 'E5', 'C5', 'A4', 'F4', 'D4'];
+            waveNotes.forEach((note, index) => {
+              setTimeout(() => AppState.visualQueue.push(note), index * 120);
+            });
+          }, 600);
+        }
+      };
+
+      // Initialize remaining systems (3D background already initialized)
+      console.log('📄 Initializing Page Manager...');
       PageManager.init();
+      
+      console.log('🔄 Initializing Page Transitions...');
+      PageTransition.init();
+      
+      console.log('⚙️ Initializing page-specific scripts...');
+      PageTransition.initializePageSpecificScripts();
+      
+      // Set initial camera position based on current page  
+      const currentPath = window.location.pathname;
+      let currentPage = 'hero';
+      if (currentPath.includes('/work')) {
+        currentPage = 'work';
+      } else if (currentPath.includes('/about')) {
+        currentPage = 'about';  
+      } else if (currentPath.includes('/blog')) {
+        currentPage = 'blog';
+      }
+      
+      console.log('🎯 Current page detected:', currentPage, 'from path:', currentPath);
+      
+      // Set initial camera position without animation - immediately
+      const cameraPositions = {
+        'hero': { x: 0, y: 0, z: 2 },
+        'work': { x: -2, y: 1, z: 3 },
+        'about': { x: 2, y: -1, z: 4 },
+        'blog': { x: 0, y: 2, z: 3 }
+      };
+      
+      const initialPos = cameraPositions[currentPage] || cameraPositions['hero'];
+      if (ThreeDBackground && ThreeDBackground.cameraTargetPosition) {
+        ThreeDBackground.cameraTargetPosition.set(initialPos.x, initialPos.y, initialPos.z);
+        console.log('📷 Camera position set to:', initialPos);
+        
+        // Force a render after camera position is set
+        setTimeout(() => {
+          if (ThreeDBackground.renderer && ThreeDBackground.scene && ThreeDBackground.camera) {
+            ThreeDBackground.renderer.render(ThreeDBackground.scene, ThreeDBackground.camera);
+            console.log('🎬 Forced render completed');
+          }
+        }, 100);
+      }
     });
   </script>
 </body>
