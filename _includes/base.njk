@@ -64,16 +64,6 @@
     .interactive-rainbow:hover::before {
       opacity: 0.15;
     }
-    .page-section, #main-content-hero, #page-footer {
-      transition: opacity 0.3s ease-in-out;
-    }
-    .page-section {
-      display: none;
-      opacity: 0;
-    }
-    .page-section.active {
-      display: block;
-    }
     .nav-link.active.interactive-rainbow::before {
       opacity: 0.25;
     }
@@ -86,7 +76,7 @@
     <header class="py-6 sticky top-0 z-50 bg-[#0A0A0A]">
       <nav class="flex justify-between items-center">
         <div class="flex items-center gap-4">
-          <a href="#" id="home-link" class="sound-interactive text-2xl font-bold tracking-tighter text-white hover:text-gray-300">Thomas Graves</a>
+          <a href="/" id="home-link" class="sound-interactive text-2xl font-bold tracking-tighter text-white hover:text-gray-300">Thomas Graves</a>
           <button id="sound-toggle" title="Toggle Sound" class="text-gray-500 hover:text-white transition-colors focus:outline-none">
             <svg id="sound-off-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd" />
@@ -98,97 +88,25 @@
           </button>
         </div>
         <div class="hidden md:flex items-center space-x-2">
-          <a data-target="work" class="nav-link sound-interactive interactive-rainbow uppercase text-sm tracking-wider px-3 py-2 rounded-md cursor-pointer transition-colors hover:text-white">Work</a>
-          <a data-target="about" class="nav-link sound-interactive interactive-rainbow uppercase text-sm tracking-wider px-3 py-2 rounded-md cursor-pointer transition-colors hover:text-white">About</a>
-          <a data-target="blog" class="nav-link sound-interactive interactive-rainbow uppercase text-sm tracking-wider px-3 py-2 rounded-md cursor-pointer transition-colors hover:text-white">Blog</a>
+          <a href="/work/" class="sound-interactive interactive-rainbow uppercase text-sm tracking-wider px-3 py-2 rounded-md cursor-pointer transition-colors hover:text-white">Work</a>
+          <a href="/about/" class="sound-interactive interactive-rainbow uppercase text-sm tracking-wider px-3 py-2 rounded-md cursor-pointer transition-colors hover:text-white">About</a>
+          <a href="/blog/" class="sound-interactive interactive-rainbow uppercase text-sm tracking-wider px-3 py-2 rounded-md cursor-pointer transition-colors hover:text-white">Blog</a>
         </div>
         <a href="mailto:hello@thomasgraves.art" class="sound-interactive hidden md:inline-block interactive-rainbow px-6 py-3 font-semibold uppercase tracking-wider rounded-lg">Contact</a>
       </nav>
     </header>
     <main>
+      {% if title == 'Home' %}
       <div id="main-content-container" style="opacity: 1; display: block;">
         <section id="main-content-hero" class="text-center py-20 sm:py-28">
           {{ content | safe }}
         </section>
       </div>
-      
-      <!-- Work Section -->
-      <section id="work" class="page-section py-16">
-        <h2 class="text-3xl tracking-tight mb-12 uppercase font-bold text-white" style="letter-spacing: 0.1em;">Featured Work</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <a data-target="portraits" class="card nav-link sound-interactive interactive-rainbow bg-[var(--color-bg-card)] rounded-xl overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-lg hover:shadow-purple-900/10">
-            <img src="images/pic01.jpg" alt="Image for Portraits of Change" class="w-full h-56 object-cover">
-            <div class="p-6 flex-grow flex flex-col">
-              <h3 class="text-xl font-bold text-white mb-2 uppercase tracking-wide">Portraits of Change</h3>
-              <p class="text-gray-400 mb-4 flex-grow">A music-technology project that bends reality, creating visual wonders driven by harmonic information captured from live music in real-time.</p>
-              <div class="mt-auto">
-                <span class="inline-block bg-[var(--color-secondary)] text-xs font-medium mr-2 px-2.5 py-1 rounded-full">Mixed Reality</span>
-                <span class="inline-block bg-[var(--color-secondary)] text-xs font-medium mr-2 px-2.5 py-1 rounded-full">Music</span>
-              </div>
-            </div>
-          </a>
-          
-          <a data-target="conductvr" class="card nav-link sound-interactive interactive-rainbow bg-[var(--color-bg-card)] rounded-xl overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-lg hover:shadow-purple-900/10">
-            <img src="images/pic02.jpg" alt="Banner for ConductVR" class="w-full h-56 object-cover">
-            <div class="p-6 flex-grow flex flex-col">
-              <h3 class="text-xl font-bold text-white mb-2 uppercase tracking-wide">ConductVR</h3>
-              <p class="text-gray-400 mb-4 flex-grow">An educational VR application designed to teach and practice standard conducting patterns in an immersive, interactive environment.</p>
-              <div class="mt-auto">
-                <span class="inline-block bg-[var(--color-secondary)] text-xs font-medium mr-2 px-2.5 py-1 rounded-full">VR</span>
-                <span class="inline-block bg-[var(--color-secondary)] text-xs font-medium mr-2 px-2.5 py-1 rounded-full">Education</span>
-              </div>
-            </div>
-          </a>
-
-          <a data-target="musicbox" class="card nav-link sound-interactive interactive-rainbow bg-[var(--color-bg-card)] rounded-xl overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-lg hover:shadow-purple-900/10">
-            <img src="images/pic03.jpg" alt="Image for The Modular Music Box" class="w-full h-56 object-cover">
-            <div class="p-6 flex-grow flex flex-col">
-              <h3 class="text-xl font-bold text-white mb-2 uppercase tracking-wide">The Modular Music Box</h3>
-              <p class="text-gray-400 mb-4 flex-grow">An audiovisual instrument for exploring harmony and geometry. Generate notes from scales, or build harmonies by stacking musical intervals.</p>
-              <div class="mt-auto">
-                <span class="inline-block bg-[var(--color-secondary)] text-xs font-medium mr-2 px-2.5 py-1 rounded-full">Audiovisual</span>
-                <span class="inline-block bg-[var(--color-secondary)] text-xs font-medium mr-2 px-2.5 py-1 rounded-full">Web Audio</span>
-              </div>
-            </div>
-          </a>
-
-          <a data-target="musicstand" class="card nav-link sound-interactive interactive-rainbow bg-[var(--color-bg-card)] rounded-xl overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-lg hover:shadow-purple-900/10">
-            <img src="images/pic04.jpg" alt="Image for The Virtual Music Stand" class="w-full h-56 object-cover">
-            <div class="p-6 flex-grow flex flex-col">
-              <h3 class="text-xl font-bold text-white mb-2 uppercase tracking-wide">The Virtual Music Stand</h3>
-              <p class="text-gray-400 mb-4 flex-grow">A cross-platform PDF reader for sheet music, evolving from HoloLens 2 to Quest 3 for the next generation of XR devices.</p>
-              <div class="mt-auto">
-                <span class="inline-block bg-[var(--color-secondary)] text-xs font-medium mr-2 px-2.5 py-1 rounded-full">XR</span>
-                <span class="inline-block bg-[var(--color-secondary)] text-xs font-medium mr-2 px-2.5 py-1 rounded-full">Tool</span>
-              </div>
-            </div>
-          </a>
-        </div>
-      </section>
-      
-      <!-- About Section -->
-      <section id="about" class="page-section py-24">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-center">
-          <div class="md:col-span-1">
-            <img src="images/pic02.jpg" alt="A portrait of Thomas Graves" class="rounded-full aspect-square object-cover mx-auto w-48 h-48 md:w-full md:h-full shadow-lg">
-          </div>
-          <div class="md:col-span-2">
-            <h2 class="text-3xl tracking-tight mb-6 uppercase font-bold text-white" style="letter-spacing: 0.1em;">About Me</h2>
-            <div class="space-y-4 text-lg text-gray-300">
-              <p>I'm a musician, technology enthusiast, and student from Colorado. Classically trained and a jazz lover at heart, I play trumpet and sing, but my passion lies in interdisciplinary creation. I love finding ways to understand music through the lens of other disciplines, from engineering to computer science. This has led me to explore mixed reality and its applications in the arts, with the goal of transforming education and live performance.</p>
-              <p class="text-gray-400">With a degree in music, I see this work as the natural culmination of my parents' legacy. My mother, a lifelong music lover, was an English teacher in the Denver Public Schools, and my father worked in IT. Their combined passions for education, the arts, and technology are the foundation upon which I build. I'm always looking to collaborate and expand my musical, educational, and professional boundaries.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Blog Section -->
-      <section id="blog" class="page-section py-16">
-        <h2 class="text-3xl tracking-tight mb-12 uppercase font-bold text-white" style="letter-spacing: 0.1em;">From the Blog</h2>
-        <div id="blog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <!-- Blog posts will be injected here -->
-        </div>
-      </section>
+      {% else %}
+      <div class="py-8">
+        {{ content | safe }}
+      </div>
+      {% endif %}
     </main>
     <footer id="page-footer" class="text-center py-12 mt-16 border-t border-[var(--color-border)]">
       <p class="text-gray-500">&copy; 2025 Thomas Graves. All Rights Reserved.</p>
@@ -410,147 +328,27 @@
         ]
       };
 
-      // Page Manager for routing with URL support
+      // Simple Page Manager - just handles sound and basic interactions
       const PageManager = {
-        scrollPositions: {},
-        
         init() {
           AppState.currentToneRowIndex = Math.floor(Math.random() * TONE_ROWS.length);
+          AppState.activePage = 'hero';
           
-          // Handle initial URL routing
+          // Set melody based on current page
           const path = window.location.pathname;
-          let initialPage = 'hero';
-          
           if (path.includes('/work')) {
-            initialPage = 'work';
+            AppState.activePage = 'work';
           } else if (path.includes('/about')) {
-            initialPage = 'about';  
+            AppState.activePage = 'about';  
           } else if (path.includes('/blog')) {
-            initialPage = 'blog';
+            AppState.activePage = 'blog';
           }
           
-          this.showPage(initialPage, false);
+          soundEngine.setMelodyForPage(AppState.activePage);
           
-          // Listen for browser back/forward buttons
-          window.addEventListener('popstate', (event) => {
-            const state = event.state || { page: 'hero' };
-            this.showPage(state.page, false);
-          });
-        },
-
-        showPage(pageId, updateHistory = true) {
-          const effectivePageId = (!pageId || pageId === 'home') ? 'hero' : pageId;
-          
-          if (updateHistory) {
-            const url = effectivePageId === 'hero' ? '/' : `/${effectivePageId}/`;
-            history.pushState({ page: effectivePageId }, '', url);
-          }
-          
-          this.startTransition(effectivePageId);
-        },
-
-        startTransition(targetId) {
-          if (AppState.isTransitioning) return;
-          const effectiveTargetId = (!targetId || targetId === 'home') ? 'hero' : targetId;
-          if (effectiveTargetId === AppState.activePage) return;
-
-          this.scrollPositions[AppState.activePage] = window.scrollY;
-
-          AppState.isTransitioning = true;
-          AppState.pageToShowAfterTransition = effectiveTargetId;
-          const oldPageId = AppState.activePage;
-          const currentElement = oldPageId === 'hero' 
-            ? document.getElementById('main-content-container') 
-            : document.getElementById(oldPageId);
-          
-          if (currentElement) { 
-            currentElement.style.opacity = '0'; 
-          }
-          document.getElementById('page-footer').style.opacity = '0';
-
-          setTimeout(() => {
-            if (currentElement) {
-              if (oldPageId === 'hero') {
-                document.getElementById('main-content-container').style.display = 'none';
-              } else {
-                currentElement.style.display = 'none';
-                currentElement.classList.remove('active');
-              }
-            }
-          }, 300);
-
-          setTimeout(() => {
-            const oldMelodyType = (oldPageId === 'work' || oldPageId === 'hero') ? 'toneRow' : 'subpage';
-            const newMelodyType = (effectiveTargetId === 'work' || effectiveTargetId === 'hero') ? 'toneRow' : 'subpage';
-            
-            if (oldMelodyType !== newMelodyType || newMelodyType === 'toneRow' || oldPageId !== effectiveTargetId) {
-              if (newMelodyType === 'toneRow') {
-                AppState.currentToneRowIndex = (AppState.currentToneRowIndex + 1) % TONE_ROWS.length;
-              }
-              soundEngine.setMelodyForPage(effectiveTargetId);
-            }
-          }, 0);
-
-          const maxTransitionTime = 1500;
-          AppState.transitionTimeoutId = setTimeout(() => {
-            if (AppState.isTransitioning) {
-              console.warn("Transition timeout reached.");
-              AppState.isTransitioning = false;
-              this.fadeInPage(AppState.pageToShowAfterTransition);
-            }
-          }, maxTransitionTime);
-
-          AppState.activePage = effectiveTargetId;
-          document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-          const activeNavLink = document.querySelector(`.nav-link[data-target="${effectiveTargetId}"]`);
-          if (activeNavLink) activeNavLink.classList.add('active');
-
-          setTimeout(() => {
-            AppState.isTransitioning = false;
-            this.fadeInPage(AppState.pageToShowAfterTransition);
-          }, 500);
-        },
-
-        fadeInPage(pageId) {
-          if (AppState.transitionTimeoutId) {
-            clearTimeout(AppState.transitionTimeoutId);
-            AppState.transitionTimeoutId = null;
-          }
-
-          // Load blog content if showing blog page
-          if (pageId === 'blog') {
+          // Load blog content if on blog page
+          if (AppState.activePage === 'blog') {
             this.loadBlogContent();
-          }
-
-          let nextElement;
-          if (pageId === 'hero') {
-            document.getElementById('main-content-container').style.display = 'block';
-            nextElement = document.getElementById('main-content-container');
-          } else {
-            document.getElementById('main-content-container').style.display = 'none';
-            nextElement = document.getElementById(pageId);
-          }
-
-          if (nextElement) {
-            nextElement.style.opacity = '0';
-            if (pageId !== 'hero') {
-              nextElement.style.display = 'block';
-              nextElement.classList.add('active');
-            }
-            void nextElement.offsetHeight;
-            requestAnimationFrame(() => {
-              nextElement.style.opacity = '1';
-            });
-          }
-
-          document.getElementById('page-footer').style.opacity = '1';
-          AppState.pageToShowAfterTransition = null;
-
-          const savedPosition = this.scrollPositions[pageId];
-          if (savedPosition !== undefined) {
-            window.scrollTo(0, savedPosition);
-          } else {
-            window.scrollTo(0, 0);
           }
         },
 
@@ -559,8 +357,7 @@
           if (!blogGrid) return;
 
           blogGrid.innerHTML = BlogData.posts.map(post => {
-            // Use YouTube thumbnail if videoId exists, otherwise use image or default
-            let imageUrl = 'images/pic01.jpg'; // Default fallback image
+            let imageUrl = 'images/pic01.jpg';
             if (post.videoId && post.videoId !== '') {
               imageUrl = `https://img.youtube.com/vi/${post.videoId}/maxresdefault.jpg`;
             } else if (post.image && post.image !== '') {
@@ -611,6 +408,7 @@
         CHUNK_SIZE: 12, VIEW_DISTANCE: 3,
 
         init() {
+          console.log('🌟 Initializing ThreeDBackground...');
           this.scene = new THREE.Scene();
           this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
           this.renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
@@ -621,6 +419,7 @@
           this.camera.position.z = 2;
           this.cameraTargetPosition.copy(this.camera.position);
           this.updateWorldGrid(true);
+          console.log('✅ ThreeDBackground initialized, starting animation...');
           this.animate();
           window.addEventListener('resize', () => this.onWindowResize());
           document.addEventListener('mousemove', (e) => this.onMouseMove(e));
@@ -783,20 +582,37 @@
         if (e.target.closest('.sound-interactive')) {
           soundEngine.playClickSound();
         }
-        
-        // Navigation handling
-        const navLink = e.target.closest('.nav-link[data-target]');
-        const homeLink = e.target.closest('#home-link');
-        
-        if (navLink) {
-          e.preventDefault();
-          PageManager.showPage(navLink.dataset.target);
-        } else if (homeLink) {
-          e.preventDefault();
-          ThreeDBackground.cameraTargetPosition.set(0, 0, 2);
-          PageManager.showPage('hero');
-        }
       });
+
+      // Reality Engine Button
+      const realityEngineBtn = document.getElementById('reality-engine-btn');
+      if (realityEngineBtn) {
+        realityEngineBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          
+          // Enable audio context
+          if (!AppState.isSoundEnabled) {
+            await soundEngine.enable();
+            AppState.isSoundEnabled = true;
+            document.getElementById('sound-off-icon').classList.add('hidden');
+            document.getElementById('sound-on-icon').classList.remove('hidden');
+          }
+          
+          // Play click sound
+          soundEngine.playClickSound();
+          
+          // Trigger visual pulse
+          if (ThreeDBackground && ThreeDBackground.scene) {
+            const randomNote = CHROMATIC_SCALE[Math.floor(Math.random() * CHROMATIC_SCALE.length)];
+            AppState.visualQueue.push(randomNote + '4');
+          }
+          
+          // Optional: Navigate to work section after a brief delay
+          setTimeout(() => {
+            PageManager.showPage('work');
+          }, 500);
+        });
+      }
 
       // Initialize
       ThreeDBackground.init();
