@@ -93,7 +93,22 @@
           <a href="/blog/" class="sound-interactive interactive-rainbow uppercase text-sm tracking-wider px-3 py-2 rounded-md cursor-pointer transition-colors hover:text-white">Blog</a>
         </div>
         <a href="mailto:hello@thomasgraves.art" class="sound-interactive hidden md:inline-block interactive-rainbow px-6 py-3 font-semibold uppercase tracking-wider rounded-lg">Contact</a>
+
+        <div class="md:hidden">
+          <button id="mobile-menu-button" class="sound-interactive text-white focus:outline-none">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+          </button>
+        </div>
       </nav>
+      
+      <div id="mobile-menu" class="hidden md:hidden flex-col text-center space-y-2 absolute top-full left-0 right-0 bg-[#0A0A0A] py-4 border-b border-[var(--color-border)] z-50">
+        <a href="/work/" class="sound-interactive interactive-rainbow block py-2">Work</a>
+        <a href="/about/" class="sound-interactive interactive-rainbow block py-2">About</a>
+        <a href="/blog/" class="sound-interactive interactive-rainbow block py-2">Blog</a>
+        <a href="mailto:hello@thomasgraves.art" class="sound-interactive interactive-rainbow w-1/2 mx-auto mt-4 px-6 py-3 font-semibold uppercase tracking-wider rounded-lg">Contact</a>
+      </div>
     </header>
     <main id="main-content" class="transition-opacity duration-300 ease-in-out">
       
@@ -556,6 +571,61 @@
       const soundEngine = new SoundEngine();
       await soundEngine.setup();
 
+      // Mobile Menu System
+      const MobileMenu = {
+        init() {
+          const mobileMenuButton = document.getElementById('mobile-menu-button');
+          const mobileMenu = document.getElementById('mobile-menu');
+          
+          if (!mobileMenuButton || !mobileMenu) {
+            console.warn('Mobile menu elements not found');
+            return;
+          }
+          
+          mobileMenuButton.addEventListener('click', () => {
+            this.toggleMenu();
+          });
+          
+          // Close mobile menu when clicking on links
+          const mobileMenuLinks = mobileMenu.querySelectorAll('a');
+          mobileMenuLinks.forEach(link => {
+            link.addEventListener('click', () => {
+              this.closeMenu();
+            });
+          });
+          
+          // Close menu when clicking outside
+          document.addEventListener('click', (e) => {
+            if (!mobileMenuButton.contains(e.target) && !mobileMenu.contains(e.target)) {
+              this.closeMenu();
+            }
+          });
+        },
+        
+        toggleMenu() {
+          const mobileMenu = document.getElementById('mobile-menu');
+          mobileMenu.classList.toggle('hidden');
+          mobileMenu.classList.toggle('flex');
+          
+          // Play sound feedback
+          if (soundEngine && soundEngine.isEnabled) {
+            soundEngine.playClickSound();
+          }
+        },
+        
+        closeMenu() {
+          const mobileMenu = document.getElementById('mobile-menu');
+          mobileMenu.classList.add('hidden');
+          mobileMenu.classList.remove('flex');
+        },
+        
+        openMenu() {
+          const mobileMenu = document.getElementById('mobile-menu');
+          mobileMenu.classList.remove('hidden');
+          mobileMenu.classList.add('flex');
+        }
+      };
+
       // Blog post data - loaded from Eleventy
       const BlogData = {
         posts: [
@@ -836,6 +906,11 @@
               history.pushState({ url }, '', url);
             }
             
+            // Close mobile menu if open
+            if (typeof MobileMenu !== 'undefined') {
+              MobileMenu.closeMenu();
+            }
+            
             // Trigger visual transition effects
             this.triggerTransitionEffects();
             
@@ -1089,6 +1164,9 @@
       
       console.log('🔄 Initializing Page Transitions...');
       PageTransition.init();
+      
+      console.log('📱 Initializing Mobile Menu...');
+      MobileMenu.init();
       
       console.log('⚙️ Initializing page-specific scripts...');
       PageTransition.initializePageSpecificScripts();
