@@ -1,0 +1,24 @@
+---
+layout: base.njk
+---
+<section class="py-16">
+  <div class="max-w-4xl mx-auto">
+    <a href="/blog/" class="interactive-rainbow inline-block mb-8 px-3 py-2 rounded-md">&larr; Back</a>
+    <div class="text-center mb-8">
+      {% if date %}
+      <p class="text-sm text-gray-500 mb-2">{{ date | postDate }}</p>
+      {% endif %}
+      <h1 class="text-4xl tracking-tight uppercase font-bold text-white" style="letter-spacing: 0.1em;">{{ title }}</h1>
+    </div>
+    {% if videoId %}
+    <div class="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden mb-12 shadow-lg bg-black">
+      <iframe src="https://www.youtube.com/embed/{{ videoId }}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full"></iframe>
+    </div>
+    {% elif image %}
+    <img src="/{{ image }}" alt="{{ title }}" class="w-full h-auto rounded-xl mb-12 shadow-lg">
+    {% endif %}
+    <div class="prose prose-invert prose-lg max-w-none text-gray-300">
+      {{ content | safe }}
+    </div>
+  </div>
+</section>
