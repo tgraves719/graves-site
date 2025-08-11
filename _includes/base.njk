@@ -69,7 +69,7 @@
     .nav-link.active.interactive-rainbow::before {
       opacity: 0.9;
     }
-    
+
     /* When sound is enabled - dimmer rainbow buttons */
     body.sound-is-on .interactive-rainbow:hover::before {
       opacity: 0.15;
@@ -117,7 +117,7 @@
       height: 100%;
       object-fit: cover;
     }
-    
+
     /* Ensure minimum height for 720p videos - only apply to video container divs in main content */
     @media (min-width: 640px) {
       .prose .aspect-w-16 {
@@ -203,7 +203,7 @@
           </button>
         </div>
       </nav>
-      
+
       <div id="mobile-menu" class="hidden md:hidden flex-col text-center space-y-2 absolute top-full left-0 right-0 bg-[#0A0A0A] py-4 border-b border-[var(--color-border)] z-50">
         <a href="/work/" class="sound-interactive interactive-rainbow block py-2">Work</a>
         <a href="/about/" class="sound-interactive interactive-rainbow block py-2">About</a>
@@ -243,11 +243,10 @@
       </div>
       {% endif %}
     </main>
-    
+
     <!-- Loading overlay for transitions -->
-    <div id="page-transition-overlay" class="fixed inset-0 bg-[#0A0A0A] z-50 opacity-0 pointer-events-none transition-opacity duration-300"></div>
-    <footer id="page-footer" class="text-center py-12 mt-16 border-t border-[var(--color-border)]">
-      <p class="text-gray-500">&copy; 2025 Thomas Graves. All Rights Reserved.</p>
+
+
     </footer>
   </div>
 
@@ -318,12 +317,12 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       console.log('📄 DOM Content Loaded');
-      
+
       // Wait for external libraries to load
       await waitForLibraries();
-      
+
       console.log('🔧 Creating 3D Background system...');
-      
+
       // NOW create the ThreeDBackground object with THREE.js available
       ThreeDBackground = {
         scene: null, camera: null, renderer: null, worldGrid: new Map(),
@@ -332,7 +331,7 @@
         baseSphereColor: new THREE.Color(0x222222),
         sphereGeometry: null, sphereMaterial: null,
         CHUNK_SIZE: 12, VIEW_DISTANCE: 2, // Reduced from 3 to 2 for better performance
-        
+
         // Enhanced Camera Movement System
         cameraMovement: {
           enabled: true, // Camera movement enabled for page transitions
@@ -354,13 +353,13 @@
 
         init() {
         console.log('🌟 Initializing ThreeDBackground...');
-        
+
         const canvas = document.getElementById('bg-canvas');
         if (!canvas) {
           console.error('❌ Canvas not available for ThreeJS initialization');
           return;
         }
-        
+
         try {
           this.scene = new THREE.Scene();
           this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -372,7 +371,7 @@
           this.sphereMaterial = new THREE.MeshBasicMaterial({ color: this.baseSphereColor });
           this.camera.position.z = 2;
           this.cameraTargetPosition.copy(this.camera.position);
-          
+
           // Initialize camera movement system
           this.cameraMovement.currentTarget.x = this.camera.position.x;
           this.cameraMovement.currentTarget.y = this.camera.position.y;
@@ -384,14 +383,14 @@
           console.log('🎯 Camera movement system initialized');
           this.updateWorldGrid(true);
           console.log('✅ ThreeDBackground initialized, starting animation...');
-          
+
           // Force first render and start animation loop
           this.renderer.render(this.scene, this.camera);
           this.animate();
-          
+
           window.addEventListener('resize', () => this.onWindowResize());
           document.addEventListener('mousemove', (e) => this.onMouseMove(e));
-          
+
           console.log('🎬 Animation loop started, spheres should be visible');
         } catch (error) {
           console.error('❌ ThreeDBackground initialization failed:', error);
@@ -412,42 +411,42 @@
       generateRandomTarget() {
         const movement = this.cameraMovement;
         const constraints = movement.constraints;
-        
+
         // Generate new random target within constraints
         movement.targetPosition.x = constraints.x.min + Math.random() * (constraints.x.max - constraints.x.min);
         movement.targetPosition.y = constraints.y.min + Math.random() * (constraints.y.max - constraints.y.min);
         movement.targetPosition.z = constraints.z.min + Math.random() * (constraints.z.max - constraints.z.min);
-        
+
         console.log('🎯 New camera target:', movement.targetPosition);
       },
 
       updateCameraMovement() {
         if (!this.cameraMovement.enabled) return;
-        
+
         const movement = this.cameraMovement;
         const now = Date.now();
-        
+
         // Check if it's time to change target
         if (now - movement.lastChangeTime > movement.changeInterval) {
           // this.generateRandomTarget(); // Disabled for better navigation
           movement.lastChangeTime = now;
         }
-        
+
         // Calculate force towards target
         const forceX = (movement.targetPosition.x - movement.currentTarget.x) * movement.acceleration;
         const forceY = (movement.targetPosition.y - movement.currentTarget.y) * movement.acceleration;
         const forceZ = (movement.targetPosition.z - movement.currentTarget.z) * movement.acceleration;
-        
+
         // Update velocity with forces
         movement.velocity.x += forceX;
         movement.velocity.y += forceY;
         movement.velocity.z += forceZ;
-        
+
         // Apply dampening
         movement.velocity.x *= movement.dampening;
         movement.velocity.y *= movement.dampening;
         movement.velocity.z *= movement.dampening;
-        
+
         // Constrain velocity to max speed
         const speed = Math.sqrt(movement.velocity.x ** 2 + movement.velocity.y ** 2 + movement.velocity.z ** 2);
         if (speed > movement.maxSpeed) {
@@ -456,24 +455,24 @@
           movement.velocity.y *= scale;
           movement.velocity.z *= scale;
         }
-        
+
         // Update current target position
         movement.currentTarget.x += movement.velocity.x;
         movement.currentTarget.y += movement.velocity.y;
         movement.currentTarget.z += movement.velocity.z;
-        
+
         // Apply mouse parallax as secondary influence
         const parallaxInput = this.mouse.x;
         const parallaxStrength = 0.3;
         const parallaxX = parallaxInput * parallaxStrength;
-        
+
         // Smooth interpolation to final camera position
         const finalX = movement.currentTarget.x + parallaxX;
         const finalY = movement.currentTarget.y;
         const finalZ = movement.currentTarget.z;
-        
+
         this.camera.position.lerp(
-          new THREE.Vector3(finalX, finalY, finalZ), 
+          new THREE.Vector3(finalX, finalY, finalZ),
           movement.smoothness
         );
       },
@@ -484,9 +483,9 @@
           console.log('🔄 Chunk already exists:', key);
           return;
         }
-        
+
         console.log('🎲 Generating chunk:', key, 'at offset:', chunkX * this.CHUNK_SIZE, chunkY * this.CHUNK_SIZE, chunkZ * this.CHUNK_SIZE);
-        
+
         const chunkSpheres = [];
         const offset = { x: chunkX * this.CHUNK_SIZE, y: chunkY * this.CHUNK_SIZE, z: chunkZ * this.CHUNK_SIZE };
         const octave = (chunkX % 8 + 8) % 8 + 2;
@@ -546,7 +545,7 @@
           .sort((a, b) => a.dist - b.dist)
           .slice(0, 4)
           .map(item => item.sphere);
-        
+
         setTimeout(() => {
           neighbors.forEach(neighbor => this.lightUpSphereWave(neighbor, color, generation + 1));
         }, 150);
@@ -569,28 +568,28 @@
 
       animate() {
         requestAnimationFrame(() => this.animate());
-        
+
         // Log every 60 frames (roughly every second)
         if (!this.frameCount) this.frameCount = 0;
         this.frameCount++;
         if (this.frameCount % 60 === 0) {
           console.log('🎬 Animation frame', this.frameCount, '- chunks:', this.worldGrid.size, 'spheres visible:', Array.from(this.worldGrid.values()).flat().length);
         }
-        
+
         // Process visual queue from melody system
         while (AppState.visualQueue.length > 0) {
           const note = AppState.visualQueue.shift();
           this.triggerVisualPulse(note);
         }
-        
+
         this.updateWorldGrid();
-        
+
         // Update sphere colors based on active pulses
         const now = Date.now();
         const allSpheres = Array.from(this.worldGrid.values()).flat();
         allSpheres.forEach(sphere => {
           let finalColor = this.baseSphereColor.clone();
-          
+
           if (sphere.userData.activePulses.length > 0) {
             sphere.userData.activePulses = sphere.userData.activePulses.filter(pulse => {
               const age = now - pulse.startTime;
@@ -603,41 +602,41 @@
               return false;
             });
           }
-          
+
           sphere.material.color.lerp(finalColor, 0.6);
         });
-        
+
         // Enhanced camera movement with physics-based randomization
         this.updateCameraMovement();
-        
+
         // Update interactive effects in same loop (performance optimization)
         if (window.InteractiveEffects) {
           InteractiveEffects.updateElements();
         }
-        
+
         this.renderer.render(this.scene, this.camera);
         }
       };
-      
+
       // FIRST: Initialize 3D Background immediately - completely independent of audio
       console.log('🚀 Starting initialization sequence...');
-      
+
       // Get DOM elements - ensure they exist
       const soundToggleBtn = document.getElementById('sound-toggle');
       const soundOnIcon = document.getElementById('sound-on-icon');
       const soundOffIcon = document.getElementById('sound-off-icon');
       const canvas = document.getElementById('bg-canvas');
-      
+
       // Ensure canvas exists before proceeding
       if (!canvas) {
         console.error('❌ Canvas element not found!');
         return;
       }
-      
+
       // Initialize 3D Background FIRST, before sound engine
       console.log('🌟 Initializing 3D Background (BEFORE audio)...');
       ThreeDBackground.init();
-      
+
       // Sound Engine Class
       class SoundEngine {
         constructor() {
@@ -652,42 +651,42 @@
           if (this.isSetup) return;
           try {
             await Tone.start();
-            
+
             this.effects.reverb = new Tone.Reverb(AUDIO_CONFIG.effects.reverb.roomSize).toDestination();
             this.effects.reverb.wet.value = AUDIO_CONFIG.effects.reverb.wetness;
-            
+
             this.effects.filter = new Tone.AutoFilter(AUDIO_CONFIG.effects.filter.frequency)
               .connect(this.effects.reverb).start();
-            
+
             this.synths.hover = new Tone.Synth({
               oscillator: { type: AUDIO_CONFIG.synths.hover.type },
               envelope: AUDIO_CONFIG.synths.hover.envelope,
               volume: AUDIO_CONFIG.synths.hover.volume
             }).connect(this.effects.reverb);
-            
+
             this.synths.click = new Tone.Synth({
               oscillator: { type: AUDIO_CONFIG.synths.click.type },
               envelope: AUDIO_CONFIG.synths.click.envelope,
               volume: AUDIO_CONFIG.synths.click.volume
             }).connect(this.effects.reverb);
-            
+
             this.synths.highClick = new Tone.Synth({
               oscillator: { type: AUDIO_CONFIG.synths.highClick.type },
               envelope: AUDIO_CONFIG.synths.highClick.envelope,
               volume: AUDIO_CONFIG.synths.highClick.volume
             }).connect(this.effects.reverb);
-            
+
             this.synths.pad = new Tone.PolySynth(Tone.AMSynth, {
               envelope: AUDIO_CONFIG.synths.pad.envelope,
               volume: AUDIO_CONFIG.synths.pad.volume
             }).connect(this.effects.filter);
-            
+
             this.synths.melody = new Tone.Synth({
               oscillator: { type: AUDIO_CONFIG.synths.melody.type },
               envelope: AUDIO_CONFIG.synths.melody.envelope,
               volume: AUDIO_CONFIG.synths.melody.volume
             }).connect(this.effects.filter);
-            
+
             this.isSetup = true;
             console.log('🎵 Sound Engine initialized');
           } catch (error) {
@@ -703,7 +702,7 @@
           this.startSoundscape();
           document.body.classList.add('sound-is-on');
           console.log('🔊 Sound enabled');
-          
+
           // Enable gyro on mobile when sound is unmuted
           if (typeof InteractiveEffects !== 'undefined' && InteractiveEffects.enableGyroOnSoundUnmute) {
             InteractiveEffects.enableGyroOnSoundUnmute();
@@ -743,12 +742,12 @@
 
         setMelodyForPage(pageId) {
           if (!AppState.isSoundEnabled || !this.isSetup) return;
-          
+
           if (this.melodySequence) {
             this.melodySequence.stop().dispose();
             this.melodySequence = null;
           }
-          
+
           let notes;
           if (pageId === 'work' || pageId === 'hero') {
             notes = TONE_ROWS[AppState.currentToneRowIndex];
@@ -773,7 +772,7 @@
               AppState.wholeToneStartIndex = 0;
             }
           }
-          
+
           this.melodySequence = new Tone.Sequence((time, note) => {
             this.synths.melody.triggerAttackRelease(note, "8n", time);
             Tone.Draw.schedule(() => {
@@ -806,16 +805,16 @@
         init() {
           const mobileMenuButton = document.getElementById('mobile-menu-button');
           const mobileMenu = document.getElementById('mobile-menu');
-          
+
           if (!mobileMenuButton || !mobileMenu) {
             console.warn('Mobile menu elements not found');
             return;
           }
-          
+
           mobileMenuButton.addEventListener('click', () => {
             this.toggleMenu();
           });
-          
+
           // Close mobile menu when clicking on links
           const mobileMenuLinks = mobileMenu.querySelectorAll('a');
           mobileMenuLinks.forEach(link => {
@@ -823,7 +822,7 @@
               this.closeMenu();
             });
           });
-          
+
           // Close menu when clicking outside
           document.addEventListener('click', (e) => {
             if (!mobileMenuButton.contains(e.target) && !mobileMenu.contains(e.target)) {
@@ -831,29 +830,29 @@
             }
           });
         },
-        
+
         toggleMenu() {
           const mobileMenu = document.getElementById('mobile-menu');
           mobileMenu.classList.toggle('hidden');
           mobileMenu.classList.toggle('flex');
-          
+
           // INSTANT visual feedback
           if (AppState.visualQueue) {
             // Visual effects handled by melody system
           }
-          
+
           // Play sound feedback
           if (soundEngine && soundEngine.isEnabled) {
             soundEngine.playClickSound();
           }
         },
-        
+
         closeMenu() {
           const mobileMenu = document.getElementById('mobile-menu');
           mobileMenu.classList.add('hidden');
           mobileMenu.classList.remove('flex');
         },
-        
+
         openMenu() {
           const mobileMenu = document.getElementById('mobile-menu');
           mobileMenu.classList.remove('hidden');
@@ -865,10 +864,10 @@
       const InteractiveEffects = {
         rainbowElements: [],
         gyroEnabled: false,
-        
+
         init() {
           this.rainbowElements = Array.from(document.querySelectorAll('.interactive-rainbow'));
-          
+
           // Initialize each rainbow element with physics data
           this.rainbowElements.forEach(el => {
             const rect = el.getBoundingClientRect();
@@ -881,46 +880,46 @@
               velocityX: '0',
               velocityY: '0'
             });
-            
+
             // Set initial CSS custom properties
             el.style.setProperty('--x', `${rect.width / 2}px`);
             el.style.setProperty('--y', `${rect.height / 2}px`);
             el.style.setProperty('--angle', '0deg');
-            
+
             // Add mouse event listeners
             el.addEventListener('mouseenter', (e) => this.onMouseEnter(e));
             el.addEventListener('mouseleave', (e) => this.onMouseLeave(e));
             el.addEventListener('mousemove', (e) => this.onMouseMove(e));
           });
-          
+
           // Make globally available for shared animation loop
           window.InteractiveEffects = this;
-          
+
           // Invalidate cached rects on window resize
           window.addEventListener('resize', () => {
             this.rainbowElements.forEach(el => {
               delete el._cachedRect;
             });
           });
-          
+
           console.log('✨ Interactive Effects initialized with', this.rainbowElements.length, 'elements (using shared animation loop)');
         },
-        
+
         onMouseEnter(e) {
           const el = e.currentTarget;
           this.updateRainbowTarget(el, e);
         },
-        
+
         onMouseLeave(e) {
           const el = e.currentTarget;
           this.resetRainbowTarget(el);
         },
-        
+
         onMouseMove(e) {
           const el = e.currentTarget;
           this.updateRainbowTarget(el, e);
         },
-        
+
         updateRainbowTarget(el, e) {
           // Optimized: Cache rect and use physics object directly
           if (!el._cachedRect) {
@@ -931,7 +930,7 @@
             el._physics.targetY = e.clientY - el._cachedRect.top;
           }
         },
-        
+
         resetRainbowTarget(el) {
           if (!el._cachedRect) {
             el._cachedRect = el.getBoundingClientRect();
@@ -941,12 +940,12 @@
             el._physics.targetY = el._cachedRect.height / 2;
           }
         },
-        
+
         animate() {
           // Optimized: Use single animation loop shared with 3D background
           this.updateElements();
         },
-        
+
         updateElements() {
           // Optimized: Process elements only when needed, reduce DOM operations
           this.rainbowElements.forEach(el => {
@@ -962,22 +961,22 @@
                 velocityY: 0
               };
             }
-            
+
             const p = el._physics;
-            
+
             // Update angle (continuous rotation)
             p.angle += 0.5;
-            
+
             // Physics-based movement towards target
             const forceX = (p.targetX - p.x) * 0.01;
             const forceY = (p.targetY - p.y) * 0.01;
-            
+
             p.velocityX = (p.velocityX + forceX) * 0.92;
             p.velocityY = (p.velocityY + forceY) * 0.92;
-            
+
             p.x += p.velocityX;
             p.y += p.velocityY;
-            
+
             // Keep rainbow effect within element bounds
             if (!el._cachedRect) {
               el._cachedRect = el.getBoundingClientRect();
@@ -985,18 +984,18 @@
             const bounds = el._cachedRect;
             p.x = Math.max(0, Math.min(bounds.width, p.x));
             p.y = Math.max(0, Math.min(bounds.height, p.y));
-            
+
             // Batch DOM updates - only update CSS properties
             el.style.setProperty('--angle', `${p.angle}deg`);
             el.style.setProperty('--x', `${p.x}px`);
             el.style.setProperty('--y', `${p.y}px`);
           });
         },
-        
+
         setupDeviceOrientation() {
           // Only for mobile devices
           if (!('ontouchstart' in window)) return;
-          
+
           // Request permission for iOS devices
           if (typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission()
@@ -1013,13 +1012,13 @@
             console.log('📱 Device orientation enabled');
           }
         },
-        
+
         enableGyroOnSoundUnmute() {
           // Only for mobile devices and if not already enabled
           if (!('ontouchstart' in window)) return;
-          
+
           console.log('📱 Attempting to enable gyro on sound unmute...');
-          
+
           // For iOS devices that require permission
           if (typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission()
@@ -1046,20 +1045,20 @@
             }
           }
         },
-        
+
         onDeviceMove(event) {
           if (event.gamma === null) return;
-          
+
           // Convert gamma (left-right tilt) to a normalized value
           const tilt = Math.max(-60, Math.min(60, event.gamma));
           const normalizedTilt = tilt / 60; // Range: -1 to 1
-          
+
           // Apply subtle device tilt effect to all rainbow elements
           this.rainbowElements.forEach(el => {
             const rect = el.getBoundingClientRect();
             const centerX = rect.width / 2;
             const offsetX = centerX + (normalizedTilt * rect.width * 0.3);
-            
+
             // Update target position based on device orientation
             el.dataset.targetX = Math.max(0, Math.min(rect.width, offsetX)).toString();
           });
@@ -1069,11 +1068,11 @@
       // Loading Animation System
       const LoadingSystem = {
         activeAnimations: new Set(),
-        
+
         async showLoadingAnimation(options = {}) {
           const animationId = Date.now() + Math.random();
           this.activeAnimations.add(animationId);
-          
+
           const {
             duration = 2000,
             showExplosion = true,
@@ -1081,87 +1080,87 @@
             message = 'Loading...',
             callback = null
           } = options;
-          
+
           // Each animation has its own ID, no global blocking
-          
+
           const loadingOverlay = document.getElementById('loading-overlay');
           const explosionBg = document.getElementById('explosion-background');
           const progressBar = document.getElementById('loading-bar-progress');
           const loadingText = loadingOverlay.querySelector('.text-white');
-          
+
           if (!loadingOverlay || !explosionBg || !progressBar) {
             console.warn('Loading elements not found');
             this.activeAnimations.delete(animationId);
             return Promise.resolve();
           }
-          
+
           // Update loading message
           loadingText.textContent = message;
-          
+
           // Show loading overlay
           loadingOverlay.classList.remove('hidden');
           loadingOverlay.classList.add('flex');
-          
+
           // Show explosion background if requested
           if (showExplosion) {
             explosionBg.classList.add('exploding');
           }
-          
+
           // Fade in overlay
           setTimeout(() => {
             loadingOverlay.style.opacity = '1';
             progressBar.style.width = '100%';
           }, 10);
-          
+
           // Play musical accompaniment
           if (playMusic && soundEngine && soundEngine.isEnabled) {
             this.playLoadingMusic();
           }
-          
+
           // Return promise that resolves when loading is complete
           return new Promise((resolve) => {
             setTimeout(() => {
               // Fade out
               loadingOverlay.style.opacity = '0';
-              
+
               setTimeout(() => {
                 // Hide elements
                 loadingOverlay.classList.add('hidden');
                 loadingOverlay.classList.remove('flex');
                 explosionBg.classList.remove('exploding');
                 progressBar.style.width = '0%';
-                
+
                 this.activeAnimations.delete(animationId);
-                
+
                 // Execute callback if provided
                 if (callback) {
                   callback();
                 }
-                
+
                 resolve();
               }, 150);
             }, duration);
           });
         },
-        
+
         playLoadingMusic() {
           if (!soundEngine || !soundEngine.isEnabled) return;
-          
+
           const now = Tone.now();
-          
+
           // Play musical sequence inspired by the original
           const loadingNotes = ['C4', 'E4', 'G4', 'C5', 'G4', 'E4', 'C4', 'G3'];
-          
+
           loadingNotes.forEach((note, index) => {
             setTimeout(() => {
               if (soundEngine.synths.melody) {
                 soundEngine.synths.melody.triggerAttackRelease(note, '16n');
-                
+
                 // Visual pulses handled by melody system only
               }
             }, index * 200);
           });
-          
+
           // Add some sparkle with the high click synth
           setTimeout(() => {
             if (soundEngine.synths.highClick) {
@@ -1173,7 +1172,7 @@
             }
           }, 800);
         },
-        
+
         // Quick loading for page transitions
         showQuickLoading(message = 'Transitioning...') {
           return this.showLoadingAnimation({
@@ -1183,7 +1182,7 @@
             message
           });
         },
-        
+
         // Full loading with all effects
         showFullLoading(message = 'Loading...', callback = null) {
           return this.showLoadingAnimation({
@@ -1220,19 +1219,19 @@
         init() {
           AppState.currentToneRowIndex = Math.floor(Math.random() * TONE_ROWS.length);
           AppState.activePage = 'hero';
-          
+
           // Set melody based on current page
           const path = window.location.pathname;
           if (path.includes('/work')) {
             AppState.activePage = 'work';
           } else if (path.includes('/about')) {
-            AppState.activePage = 'about';  
+            AppState.activePage = 'about';
           } else if (path.includes('/blog')) {
             AppState.activePage = 'blog';
           }
-          
+
           // Melody will be set when sound engine is ready and enabled
-          
+
           // Load blog content if on blog page
           if (AppState.activePage === 'blog') {
             this.loadBlogContent();
@@ -1286,7 +1285,7 @@
             console.log('🎵 Setting up sound engine...');
             await soundEngine.setup();
           }
-          
+
           // Explicitly handle first-time activation
           if (!soundEngine.isEnabled) {
             soundEngine.enable();
@@ -1295,7 +1294,7 @@
             soundEngine.disable();
             console.log('🔇 Sound disabled');
           }
-          
+
           // Update UI
           const isEnabled = soundEngine.isEnabled;
           soundOnIcon.classList.toggle('hidden', !isEnabled);
@@ -1329,103 +1328,103 @@
       // Page Transition System
       const PageTransition = {
         isTransitioning: false,
-        
+
         async navigateToPage(url, pushState = true) {
           if (this.isTransitioning) {
             console.log('📄 Navigation already in progress, allowing concurrent requests');
           }
           this.isTransitioning = true;
-          
+
           try {
             // Show loading overlay
             const overlay = document.getElementById('page-transition-overlay');
             const mainContent = document.getElementById('main-content');
-            
+
             overlay.style.pointerEvents = 'all';
             overlay.style.opacity = '0.3';
             mainContent.style.opacity = '0.7';
-            
+
             // Fetch new page content
             const response = await fetch(url);
             if (!response.ok) throw new Error('Failed to load page');
-            
+
             const html = await response.text();
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            
+
             // Extract the new content and title
             const newMainContent = doc.querySelector('main');
             const newTitle = doc.querySelector('title')?.textContent || 'Thomas Graves';
-            
+
             if (!newMainContent) throw new Error('Invalid page structure');
-            
+
             // Update page title and URL
             document.title = newTitle;
             if (pushState) {
               history.pushState({ url }, '', url);
             }
-            
+
             // Close mobile menu if open
             if (typeof MobileMenu !== 'undefined') {
               MobileMenu.closeMenu();
             }
-            
+
             // Trigger visual transition effects
             this.triggerTransitionEffects();
-            
+
             // Fade out completely
             mainContent.style.opacity = '0';
-            
+
             // Wait for fade out (faster)
             await new Promise(resolve => setTimeout(resolve, 150));
-            
+
             // Replace content
             mainContent.innerHTML = newMainContent.innerHTML;
             mainContent.className = newMainContent.className;
-            
+
             // Update active page for music and camera
             const path = url;
             let newPageId;
             if (path.includes('/work')) {
               newPageId = 'work';
             } else if (path.includes('/about')) {
-              newPageId = 'about';  
+              newPageId = 'about';
             } else if (path.includes('/blog')) {
               newPageId = 'blog';
             } else {
               newPageId = 'hero';
             }
-            
+
             AppState.activePage = newPageId;
-            
+
             // Set new melody for the page (music continues seamlessly)
             soundEngine.setMelodyForPage(AppState.activePage);
-            
+
             // Animate camera to new page position
             this.animateCameraForPage(newPageId);
-            
+
             // Load blog content if needed
             if (AppState.activePage === 'blog') {
               PageManager.loadBlogContent();
             }
-            
+
             // Reinitialize page-specific functionality
             this.initializePageSpecificScripts();
-            
+
             // Reinitialize interactive effects for new elements
             if (typeof InteractiveEffects !== 'undefined') {
               InteractiveEffects.init();
             }
-            
+
             // Fade in new content
             overlay.style.opacity = '0';
             mainContent.style.opacity = '1';
-            
+
             // Clean up overlay (faster)
             setTimeout(() => {
               overlay.style.pointerEvents = 'none';
             }, 200);
-            
+
           } catch (error) {
             console.error('Navigation error:', error);
             // Fallback to normal navigation
@@ -1434,27 +1433,27 @@
             this.isTransitioning = false;
           }
         },
-        
+
         init() {
           // Intercept navigation clicks
           document.addEventListener('click', (e) => {
             const link = e.target.closest('a[href]');
             if (!link) return;
-            
+
             const href = link.getAttribute('href');
-            
+
             // Only intercept internal links
             if (!href || href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('#')) {
               return;
             }
-            
+
             // Don't intercept if ctrl/cmd/shift clicked (user wants new tab)
             if (e.ctrlKey || e.metaKey || e.shiftKey) return;
-            
+
             e.preventDefault();
             this.navigateToPage(href);
           });
-          
+
           // Handle browser back/forward buttons
           window.addEventListener('popstate', (e) => {
             if (e.state && e.state.url) {
@@ -1463,39 +1462,39 @@
               this.navigateToPage(window.location.pathname, false);
             }
           });
-          
+
           // Store initial state
           history.replaceState({ url: window.location.pathname }, '', window.location.pathname);
         },
-        
+
         initializePageSpecificScripts() {
           // Initialize project page toggle functionality
           this.initProjectPageToggles();
-          
+
           // Initialize Reality Engine button if we're on the home page
           this.initRealityEngineButton();
         },
-        
+
         initRealityEngineButton() {
           // Reality Engine Button with Loading System - only initialize if button exists
           const realityEngineBtn = document.getElementById('reality-engine-btn');
           const noVrModal = document.getElementById('no-vr-modal');
           const closeNoVrModalBtn = document.getElementById('close-no-vr-modal');
-          
+
           if (realityEngineBtn) {
             // Remove any existing event listeners to prevent duplicates
             const newRealityEngineBtn = realityEngineBtn.cloneNode(true);
             realityEngineBtn.parentNode.replaceChild(newRealityEngineBtn, realityEngineBtn);
-            
+
             newRealityEngineBtn.addEventListener('click', async (e) => {
               e.preventDefault();
               e.stopPropagation(); // Prevent event bubbling that could trigger sound
-              
+
               // Visual effects will be handled by melody system
-              
-              // INSTANT visual feedback - start loading animation immediately  
+
+              // INSTANT visual feedback - start loading animation immediately
               const loadingPromise = LoadingSystem.showFullLoading('Initializing Reality Engine...');
-              
+
               // PARALLEL execution - all these happen while animation runs
               const soundSetupPromise = (async () => {
                 // Only setup sound engine, don't automatically enable it
@@ -1507,9 +1506,9 @@
                   soundEngine.playClickSound();
                 }
               })();
-              
+
               const pagePreloadPromise = fetch('/work/');
-              
+
               const webxrCheckPromise = (async () => {
                 try {
                   if (navigator.xr && await navigator.xr.isSessionSupported('immersive-vr')) {
@@ -1524,15 +1523,15 @@
                   return { hasVR: false };
                 }
               })();
-              
+
               // Wait for all parallel operations to complete
               const [loadingResult, soundResult, pageResult, webxrResult] = await Promise.all([
                 loadingPromise,
-                soundSetupPromise, 
+                soundSetupPromise,
                 pagePreloadPromise,
                 webxrCheckPromise
               ]);
-              
+
               // Navigate immediately after loading animation completes
               if (webxrResult.hasVR) {
                 window.location.href = '/work/';
@@ -1543,13 +1542,13 @@
               }
             });
           }
-          
+
           // Close VR Modal
           if (closeNoVrModalBtn && noVrModal) {
             // Remove existing event listener and add new one
             const newCloseBtn = closeNoVrModalBtn.cloneNode(true);
             closeNoVrModalBtn.parentNode.replaceChild(newCloseBtn, closeNoVrModalBtn);
-            
+
             newCloseBtn.addEventListener('click', () => {
               noVrModal.classList.add('hidden');
               if (AppState.isSoundEnabled) {
@@ -1594,29 +1593,29 @@
                 <p class="text-gray-400 text-sm">${entry.text}</p>
               </div>
             `).join('');
-            
+
             // Add proper event listeners to devlog cards
             setTimeout(() => {
               const devlogCards = devlogGrid.querySelectorAll('[data-devlog-id]');
               devlogCards.forEach(card => {
                 const devlogId = card.dataset.devlogId;
                 const targetUrl = `/posts/devlog-${devlogId}/`;
-                
+
                 card.addEventListener('click', (e) => {
                   e.preventDefault();
                   console.log('🎯 Devlog card clicked:', devlogId, 'URL:', targetUrl);
-                  
+
                   // Store the current page URL for back navigation
                   const currentUrl = window.location.href;
                   const currentTitle = document.title;
                   console.log('📝 Storing navigation history from portraits:', currentUrl, currentTitle);
                   sessionStorage.setItem('last-page-url', currentUrl);
                   sessionStorage.setItem('last-page-title', currentTitle);
-                  
+
                   // Verify it was stored
                   console.log('✅ Verification - stored URL:', sessionStorage.getItem('last-page-url'));
                   console.log('✅ Verification - stored title:', sessionStorage.getItem('last-page-title'));
-                  
+
                   // Use page transition if available, otherwise fall back to direct navigation
                   if (typeof PageTransition !== 'undefined' && PageTransition.navigateToPage) {
                     console.log('✨ Using PageTransition.navigateToPage');
@@ -1627,7 +1626,7 @@
                   }
                 });
               });
-              
+
               // Re-initialize interactive effects for new devlog elements
               if (typeof InteractiveEffects !== 'undefined') {
                 InteractiveEffects.init();
@@ -1643,7 +1642,7 @@
               const isHidden = devlogSection.classList.contains('hidden');
               devlogSection.classList.toggle('hidden');
               newDevlogBtn.textContent = isHidden ? 'Hide Development Log' : 'View Development Log';
-              
+
               if (!isHidden && collaboratorsSection && !collaboratorsSection.classList.contains('hidden')) {
                 collaboratorsSection.classList.add('hidden');
                 if (collaboratorsBtn) collaboratorsBtn.textContent = 'View Collaborators';
@@ -1658,7 +1657,7 @@
               const isHidden = collaboratorsSection.classList.contains('hidden');
               collaboratorsSection.classList.toggle('hidden');
               newCollaboratorsBtn.textContent = isHidden ? 'Hide Collaborators' : 'View Collaborators';
-              
+
               if (!isHidden && devlogSection && !devlogSection.classList.contains('hidden')) {
                 devlogSection.classList.add('hidden');
                 if (devlogBtn) document.getElementById('toggle-devlog-btn').textContent = 'View Development Log';
@@ -1666,7 +1665,7 @@
             });
           }
         },
-        
+
         animateCameraForPage(pageId) {
           // Define base camera positions for different pages
           const baseCameraPositions = {
@@ -1675,67 +1674,67 @@
             'about': { x: 2, y: -1, z: 4 },
             'blog': { x: 0, y: 2, z: 3 }
           };
-          
+
           const basePos = baseCameraPositions[pageId] || baseCameraPositions['hero'];
-          
+
           // Add randomization for more dynamic transitions
           const randomFactor = 0.5; // How much randomization to apply
           const distanceMultiplier = 1 + (Math.random() - 0.5) * 1.0; // 0.5x to 1.5x distance
-          
+
           const targetPos = {
             x: basePos.x + (Math.random() - 0.5) * randomFactor * 2,
             y: basePos.y + (Math.random() - 0.5) * randomFactor * 2,
             z: basePos.z * distanceMultiplier + (Math.random() - 0.5) * randomFactor
           };
-          
+
           console.log('🎯 Randomized camera target for', pageId, 'base:', basePos, 'randomized:', targetPos);
-          
+
           if (ThreeDBackground && ThreeDBackground.cameraTargetPosition) {
             // Smooth camera transition over 1 second (faster like original)
             const startPos = ThreeDBackground.cameraTargetPosition.clone();
             const endPos = new THREE.Vector3(targetPos.x, targetPos.y, targetPos.z);
-            
+
             let startTime = Date.now();
             const duration = 1000; // 1 second
-            
+
             const animateCamera = () => {
               const elapsed = Date.now() - startTime;
               const progress = Math.min(elapsed / duration, 1);
-              
+
               // Use easeInOutCubic for smooth animation
-              const easedProgress = progress < 0.5 
-                ? 4 * progress * progress * progress 
+              const easedProgress = progress < 0.5
+                ? 4 * progress * progress * progress
                 : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-              
+
               const currentPos = startPos.clone().lerp(endPos, easedProgress);
               ThreeDBackground.cameraTargetPosition.copy(currentPos);
               // Also update the movement system target for smooth transition
               ThreeDBackground.cameraMovement.targetPosition.x = currentPos.x;
               ThreeDBackground.cameraMovement.targetPosition.y = currentPos.y;
               ThreeDBackground.cameraMovement.targetPosition.z = currentPos.z;
-              
+
               if (progress < 1) {
                 requestAnimationFrame(animateCamera);
               }
             };
-            
+
             animateCamera();
-            
+
             // Visual effects handled by melody system only
           }
         },
-        
+
         triggerTransitionEffects() {
           if (!ThreeDBackground || !ThreeDBackground.scene) return;
-          
+
           // Create a dramatic visual effect during page transitions
           const effectNotes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
-          
+
           // Trigger rapid fire note pulses in sequence
           effectNotes.forEach((note, index) => {
             setTimeout(() => {
               AppState.visualQueue.push(note);
-              
+
               // Add some extra intensity by triggering multiple related notes
               if (index % 2 === 0) {
                 const harmonicNote = note.replace('4', '3'); // Drop an octave
@@ -1743,7 +1742,7 @@
               }
             }, index * 40);
           });
-          
+
           // Add a cascading wave effect after the rapid sequence
           setTimeout(() => {
             const waveNotes = ['G5', 'E5', 'C5', 'A4', 'F4', 'D4'];
@@ -1757,34 +1756,34 @@
       // Initialize remaining systems (3D background already initialized)
       console.log('📄 Initializing Page Manager...');
       PageManager.init();
-      
+
       console.log('🔄 Initializing Page Transitions...');
       PageTransition.init();
-      
+
       console.log('📱 Initializing Mobile Menu...');
       MobileMenu.init();
-      
+
       console.log('✨ Initializing Interactive Effects...');
       InteractiveEffects.init();
       InteractiveEffects.setupDeviceOrientation();
-      
+
       console.log('⚙️ Initializing page-specific scripts...');
       PageTransition.initializePageSpecificScripts();
-      
+
       // Initialize contact dropdown functionality
       console.log('📞 Initializing contact dropdowns...');
       const contactDropdownBtn = document.getElementById('contact-dropdown-btn');
       const contactDropdown = document.getElementById('contact-dropdown');
       const mobileContactDropdownBtn = document.getElementById('mobile-contact-dropdown-btn');
       const mobileContactDropdown = document.getElementById('mobile-contact-dropdown');
-      
+
       if (contactDropdownBtn && contactDropdown) {
         contactDropdownBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           contactDropdown.classList.toggle('hidden');
           soundEngine.playClickSound();
         });
-        
+
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
           if (!contactDropdownBtn.contains(e.target) && !contactDropdown.contains(e.target)) {
@@ -1792,7 +1791,7 @@
           }
         });
       }
-      
+
       if (mobileContactDropdownBtn && mobileContactDropdown) {
         mobileContactDropdownBtn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -1800,20 +1799,20 @@
           soundEngine.playClickSound();
         });
       }
-      
-      // Set initial camera position based on current page  
+
+      // Set initial camera position based on current page
       const currentPath = window.location.pathname;
       let currentPage = 'hero';
       if (currentPath.includes('/work')) {
         currentPage = 'work';
       } else if (currentPath.includes('/about')) {
-        currentPage = 'about';  
+        currentPage = 'about';
       } else if (currentPath.includes('/blog')) {
         currentPage = 'blog';
       }
-      
+
       console.log('🎯 Current page detected:', currentPage, 'from path:', currentPath);
-      
+
       // Set initial camera position without animation - immediately
       const cameraPositions = {
         'hero': { x: 0, y: 0, z: 2 },
@@ -1821,12 +1820,12 @@
         'about': { x: 2, y: -1, z: 4 },
         'blog': { x: 0, y: 2, z: 3 }
       };
-      
+
       const initialPos = cameraPositions[currentPage] || cameraPositions['hero'];
       if (ThreeDBackground && ThreeDBackground.cameraTargetPosition) {
         ThreeDBackground.cameraTargetPosition.set(initialPos.x, initialPos.y, initialPos.z);
         console.log('📷 Camera position set to:', initialPos);
-        
+
         // Force a render after camera position is set
         setTimeout(() => {
           if (ThreeDBackground.renderer && ThreeDBackground.scene && ThreeDBackground.camera) {
@@ -1840,7 +1839,8 @@
 
   <!-- Footer with social links -->
   <footer class="mt-16 py-8 border-t border-gray-800 text-center">
-    <div class="flex justify-center space-x-6">
+
+  <div class="flex justify-center space-x-6 mb-6">
       <a href="https://www.youtube.com/@MixedRealityMusician" target="_blank" class="text-gray-400 hover:text-white transition-colors" aria-label="YouTube">
         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" clip-rule="evenodd"></path>
@@ -1857,6 +1857,10 @@
         </svg>
       </a>
     </div>
+    <div id="page-transition-overlay" class="fixed inset-0 bg-[#0A0A0A] z-50 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+
+        <p class="text-gray-500">&copy; 2025 Thomas Graves. All Rights Reserved.</p>
   </footer>
 </body>
 </html>
