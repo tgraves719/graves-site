@@ -5,7 +5,7 @@ title: About
 <section id="about-content" class="py-24">
   <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-center">
     <div class="md:col-span-1">
-      <img src="/images/pic26.jpg" alt="A portrait of Thomas Graves" class="rounded-full aspect-square object-cover mx-auto w-48 h-48 md:w-full md:h-full shadow-lg">
+      <img src="/images/pic25.jpg" alt="A portrait of Thomas Graves" class="rounded-full aspect-square object-cover mx-auto w-48 h-48 md:w-full md:h-full shadow-lg">
     </div>
     <div class="md:col-span-2">
       <h2 class="text-3xl tracking-tight mb-6 uppercase font-bold text-white" style="letter-spacing: 0.1em;">About Me</h2>

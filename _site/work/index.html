@@ -62,10 +62,19 @@
       background: var(--color-bg-card);
       border-radius: inherit;
     }
+    /* Default state (muted) - bright rainbow buttons */
     .interactive-rainbow:hover::before {
-      opacity: 0.15;
+      opacity: 0.8;
     }
     .nav-link.active.interactive-rainbow::before {
+      opacity: 0.9;
+    }
+    
+    /* When sound is enabled - dimmer rainbow buttons */
+    body.sound-is-on .interactive-rainbow:hover::before {
+      opacity: 0.15;
+    }
+    body.sound-is-on .nav-link.active.interactive-rainbow::before {
       opacity: 0.25;
     }
 
@@ -90,6 +99,32 @@
       60% { background: radial-gradient(circle, #8000ff 60%, #00ffff 80%, transparent 100%); }
       80% { background: radial-gradient(circle, #ff2a2a 80%, #ffff00 100%, transparent 120%); }
       100% { background: transparent; opacity: 0; }
+    }
+
+    /* Aspect ratio utilities for proper YouTube video sizing */
+    .aspect-w-16 {
+      position: relative;
+      padding-bottom: calc(9 / 16 * 100%); /* 16:9 aspect ratio */
+      height: 0;
+    }
+    .aspect-w-16 iframe,
+    .aspect-w-16 video,
+    .aspect-w-16 img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    /* Ensure minimum height for 720p videos - only apply to video container divs in main content */
+    @media (min-width: 640px) {
+      .prose .aspect-w-16 {
+        padding-bottom: 405px; /* 720px * 9/16 = 405px */
+        height: auto;
+        min-height: 405px;
+      }
     }
   </style>
 </head>
@@ -136,7 +171,29 @@
           <a href="/about/" class="sound-interactive interactive-rainbow uppercase text-sm tracking-wider px-3 py-2 rounded-md cursor-pointer transition-colors hover:text-white">About</a>
           <a href="/blog/" class="sound-interactive interactive-rainbow uppercase text-sm tracking-wider px-3 py-2 rounded-md cursor-pointer transition-colors hover:text-white">Blog</a>
         </div>
-        <a href="mailto:hello@thomasgraves.art" class="sound-interactive hidden md:inline-block interactive-rainbow px-6 py-3 font-semibold uppercase tracking-wider rounded-lg">Contact</a>
+        <div class="relative hidden md:inline-block">
+          <button id="contact-dropdown-btn" class="sound-interactive px-6 py-3 font-semibold uppercase tracking-wider rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 transition-colors">Contact</button>
+          <div id="contact-dropdown" class="absolute right-0 top-full mt-2 w-56 bg-gray-800 border border-gray-600 rounded-lg shadow-lg hidden z-50">
+            <div class="p-4">
+              <h3 class="font-bold text-gray-200 mb-3 uppercase tracking-wide">Get in Touch</h3>
+              <div class="space-y-2">
+                <a href="mailto:hello@thomasgraves.art" class="flex items-center gap-3 p-2 rounded hover:bg-gray-700 transition-colors">
+                  <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                  </svg>
+                  <span class="text-gray-300 text-sm">Email</span>
+                </a>
+                <a href="https://www.linkedin.com/in/thomas-graves-trumpet/" target="_blank" class="flex items-center gap-3 p-2 rounded hover:bg-gray-700 transition-colors">
+                  <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.338 16.338H13.67V12.16c0-.995-.017-2.277-1.387-2.277-1.39 0-1.601 1.086-1.601 2.207v4.248H8.014v-8.59h2.559v1.174h.037c.356-.675 1.227-1.387 2.526-1.387 2.703 0 3.203 1.778 3.203 4.092v4.711zM5.005 6.575a1.548 1.548 0 11-.003-3.096 1.548 1.548 0 01.003 3.096zm-1.337 9.763H6.34v-8.59H3.667v8.59zM17.668 1H2.328C1.595 1 1 1.581 1 2.298v15.403C1 18.418 1.595 19 2.328 19h15.34c.734 0 1.332-.582 1.332-1.299V2.298C19 1.581 18.402 1 17.668 1z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="text-gray-300 text-sm">LinkedIn</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div class="md:hidden">
           <button id="mobile-menu-button" class="sound-interactive text-white focus:outline-none">
@@ -151,7 +208,26 @@
         <a href="/work/" class="sound-interactive interactive-rainbow block py-2">Work</a>
         <a href="/about/" class="sound-interactive interactive-rainbow block py-2">About</a>
         <a href="/blog/" class="sound-interactive interactive-rainbow block py-2">Blog</a>
-        <a href="mailto:hello@thomasgraves.art" class="sound-interactive interactive-rainbow w-1/2 mx-auto mt-4 px-6 py-3 font-semibold uppercase tracking-wider rounded-lg">Contact</a>
+        <div class="w-1/2 mx-auto mt-4">
+          <button id="mobile-contact-dropdown-btn" class="sound-interactive w-full px-6 py-3 font-semibold uppercase tracking-wider rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 transition-colors">Contact</button>
+          <div id="mobile-contact-dropdown" class="mt-2 bg-gray-800 border border-gray-600 rounded-lg hidden">
+            <div class="p-4 space-y-2">
+              <a href="mailto:hello@thomasgraves.art" class="flex items-center gap-3 p-2 rounded hover:bg-gray-700 transition-colors">
+                <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                </svg>
+                <span class="text-gray-300 text-sm">Email</span>
+              </a>
+              <a href="https://www.linkedin.com/in/thomas-graves-trumpet/" target="_blank" class="flex items-center gap-3 p-2 rounded hover:bg-gray-700 transition-colors">
+                <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.338 16.338H13.67V12.16c0-.995-.017-2.277-1.387-2.277-1.39 0-1.601 1.086-1.601 2.207v4.248H8.014v-8.59h2.559v1.174h.037c.356-.675 1.227-1.387 2.526-1.387 2.703 0 3.203 1.778 3.203 4.092v4.711zM5.005 6.575a1.548 1.548 0 11-.003-3.096 1.548 1.548 0 01.003 3.096zm-1.337 9.763H6.34v-8.59H3.667v8.59zM17.668 1H2.328C1.595 1 1 1.581 1 2.298v15.403C1 18.418 1.595 19 2.328 19h15.34c.734 0 1.332-.582 1.332-1.299V2.298C19 1.581 18.402 1 17.668 1z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-gray-300 text-sm">LinkedIn</span>
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
     </header>
     <main id="main-content" class="transition-opacity duration-300 ease-in-out">
@@ -672,6 +748,11 @@
           this.startSoundscape();
           document.body.classList.add('sound-is-on');
           console.log('🔊 Sound enabled');
+          
+          // Enable gyro on mobile when sound is unmuted
+          if (typeof InteractiveEffects !== 'undefined' && InteractiveEffects.enableGyroOnSoundUnmute) {
+            InteractiveEffects.enableGyroOnSoundUnmute();
+          }
         }
 
         disable() {
@@ -828,6 +909,7 @@
       // Advanced Interactive Effects System
       const InteractiveEffects = {
         rainbowElements: [],
+        gyroEnabled: false,
         
         init() {
           this.rainbowElements = Array.from(document.querySelectorAll('.interactive-rainbow'));
@@ -941,6 +1023,14 @@
             p.x += p.velocityX;
             p.y += p.velocityY;
             
+            // Keep rainbow effect within element bounds
+            if (!el._cachedRect) {
+              el._cachedRect = el.getBoundingClientRect();
+            }
+            const bounds = el._cachedRect;
+            p.x = Math.max(0, Math.min(bounds.width, p.x));
+            p.y = Math.max(0, Math.min(bounds.height, p.y));
+            
             // Batch DOM updates - only update CSS properties
             el.style.setProperty('--angle', `${p.angle}deg`);
             el.style.setProperty('--x', `${p.x}px`);
@@ -966,6 +1056,39 @@
             // For Android and other devices
             window.addEventListener('deviceorientation', (e) => this.onDeviceMove(e));
             console.log('📱 Device orientation enabled');
+          }
+        },
+        
+        enableGyroOnSoundUnmute() {
+          // Only for mobile devices and if not already enabled
+          if (!('ontouchstart' in window)) return;
+          
+          console.log('📱 Attempting to enable gyro on sound unmute...');
+          
+          // For iOS devices that require permission
+          if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission()
+              .then(permissionState => {
+                if (permissionState === 'granted') {
+                  if (!this.gyroEnabled) {
+                    window.addEventListener('deviceorientation', (e) => this.onDeviceMove(e));
+                    this.gyroEnabled = true;
+                    console.log('📱 Gyro enabled after sound unmute');
+                  }
+                } else {
+                  console.log('📱 Device orientation permission denied');
+                }
+              })
+              .catch(error => {
+                console.warn('📱 Device orientation permission request failed:', error);
+              });
+          } else {
+            // For Android and other devices that don't require explicit permission
+            if (!this.gyroEnabled) {
+              window.addEventListener('deviceorientation', (e) => this.onDeviceMove(e));
+              this.gyroEnabled = true;
+              console.log('📱 Gyro enabled after sound unmute (Android/other)');
+            }
           }
         },
         
@@ -1285,7 +1408,7 @@
                   </div>
                   <h3 class="text-xl font-bold text-white mb-2 group-hover:text-gray-300 transition-colors">${post.title}</h3>
                   <p class="text-gray-500 text-sm mb-4">${post.date}</p>
-                  <a href="${post.url}" class="inline-block sound-interactive interactive-rainbow px-4 py-2 font-semibold text-sm uppercase tracking-wider rounded-lg transition-colors">Read More</a>
+                  <a href="${post.url}" class="inline-block sound-interactive interactive-rainbow px-4 py-2 font-semibold text-sm uppercase tracking-wider rounded-lg transition-colors" onclick="console.log('📝 Storing navigation history from blog:', window.location.href, document.title); sessionStorage.setItem('last-page-url', window.location.href); sessionStorage.setItem('last-page-title', document.title);">Read More</a>
                 </div>
               </article>
             `;
@@ -1339,76 +1462,6 @@
         }
       });
 
-      // Reality Engine Button with Loading System
-      const realityEngineBtn = document.getElementById('reality-engine-btn');
-      const noVrModal = document.getElementById('no-vr-modal');
-      const closeNoVrModalBtn = document.getElementById('close-no-vr-modal');
-      
-      if (realityEngineBtn) {
-        realityEngineBtn.addEventListener('click', async (e) => {
-          e.preventDefault();
-          
-          // Visual effects will be handled by melody system
-          
-          // INSTANT visual feedback - start loading animation immediately  
-          const loadingPromise = LoadingSystem.showFullLoading('Initializing Reality Engine...');
-          
-          // PARALLEL execution - all these happen while animation runs
-          const soundSetupPromise = (async () => {
-            if (!AppState.isSoundEnabled) {
-              await soundEngine.setup();
-              soundEngine.enable();
-              document.getElementById('sound-off-icon').classList.add('hidden');
-              document.getElementById('sound-on-icon').classList.remove('hidden');
-              // Set melody for current page after enabling sound
-              soundEngine.setMelodyForPage(AppState.activePage);
-            }
-            soundEngine.playClickSound();
-          })();
-          
-          const pagePreloadPromise = fetch('/work/');
-          
-          const webxrCheckPromise = (async () => {
-            try {
-              if (navigator.xr && await navigator.xr.isSessionSupported('immersive-vr')) {
-                console.log('✅ WebXR VR session supported');
-                return { hasVR: true };
-              } else {
-                console.log('❌ WebXR not supported');
-                return { hasVR: false };
-              }
-            } catch (error) {
-              console.error('WebXR check failed:', error);
-              return { hasVR: false };
-            }
-          })();
-          
-          // Wait for all parallel operations to complete
-          const [loadingResult, soundResult, pageResult, webxrResult] = await Promise.all([
-            loadingPromise,
-            soundSetupPromise, 
-            pagePreloadPromise,
-            webxrCheckPromise
-          ]);
-          
-          // Navigate immediately after loading animation completes
-          if (webxrResult.hasVR) {
-            window.location.href = '/work/';
-          } else {
-            if (noVrModal) {
-              noVrModal.classList.remove('hidden');
-            }
-          }
-        });
-      }
-      
-      // Close VR Modal
-      if (closeNoVrModalBtn && noVrModal) {
-        closeNoVrModalBtn.addEventListener('click', () => {
-          noVrModal.classList.add('hidden');
-          soundEngine.playClickSound();
-        });
-      }
 
       // Page Transition System
       const PageTransition = {
@@ -1555,8 +1608,94 @@
         initializePageSpecificScripts() {
           // Initialize project page toggle functionality
           this.initProjectPageToggles();
+          
+          // Initialize Reality Engine button if we're on the home page
+          this.initRealityEngineButton();
         },
         
+        initRealityEngineButton() {
+          // Reality Engine Button with Loading System - only initialize if button exists
+          const realityEngineBtn = document.getElementById('reality-engine-btn');
+          const noVrModal = document.getElementById('no-vr-modal');
+          const closeNoVrModalBtn = document.getElementById('close-no-vr-modal');
+          
+          if (realityEngineBtn) {
+            // Remove any existing event listeners to prevent duplicates
+            const newRealityEngineBtn = realityEngineBtn.cloneNode(true);
+            realityEngineBtn.parentNode.replaceChild(newRealityEngineBtn, realityEngineBtn);
+            
+            newRealityEngineBtn.addEventListener('click', async (e) => {
+              e.preventDefault();
+              e.stopPropagation(); // Prevent event bubbling that could trigger sound
+              
+              // Visual effects will be handled by melody system
+              
+              // INSTANT visual feedback - start loading animation immediately  
+              const loadingPromise = LoadingSystem.showFullLoading('Initializing Reality Engine...');
+              
+              // PARALLEL execution - all these happen while animation runs
+              const soundSetupPromise = (async () => {
+                // Only setup sound engine, don't automatically enable it
+                if (!soundEngine.isSetup) {
+                  await soundEngine.setup();
+                }
+                // Play click sound only if sound is already enabled
+                if (AppState.isSoundEnabled) {
+                  soundEngine.playClickSound();
+                }
+              })();
+              
+              const pagePreloadPromise = fetch('/work/');
+              
+              const webxrCheckPromise = (async () => {
+                try {
+                  if (navigator.xr && await navigator.xr.isSessionSupported('immersive-vr')) {
+                    console.log('✅ WebXR VR session supported');
+                    return { hasVR: true };
+                  } else {
+                    console.log('❌ WebXR not supported');
+                    return { hasVR: false };
+                  }
+                } catch (error) {
+                  console.error('WebXR check failed:', error);
+                  return { hasVR: false };
+                }
+              })();
+              
+              // Wait for all parallel operations to complete
+              const [loadingResult, soundResult, pageResult, webxrResult] = await Promise.all([
+                loadingPromise,
+                soundSetupPromise, 
+                pagePreloadPromise,
+                webxrCheckPromise
+              ]);
+              
+              // Navigate immediately after loading animation completes
+              if (webxrResult.hasVR) {
+                window.location.href = '/work/';
+              } else {
+                if (noVrModal) {
+                  noVrModal.classList.remove('hidden');
+                }
+              }
+            });
+          }
+          
+          // Close VR Modal
+          if (closeNoVrModalBtn && noVrModal) {
+            // Remove existing event listener and add new one
+            const newCloseBtn = closeNoVrModalBtn.cloneNode(true);
+            closeNoVrModalBtn.parentNode.replaceChild(newCloseBtn, closeNoVrModalBtn);
+            
+            newCloseBtn.addEventListener('click', () => {
+              noVrModal.classList.add('hidden');
+              if (AppState.isSoundEnabled) {
+                soundEngine.playClickSound();
+              }
+            });
+          }
+        },
+
         initProjectPageToggles() {
           // Development log data for Portraits of Change
           const devlogData = [
@@ -1582,17 +1721,55 @@
 
           // Populate devlog grid if it exists
           if (devlogGrid && devlogGrid.children.length === 0) {
-            devlogGrid.innerHTML = devlogData.map(entry => `
-              <div class="bg-[var(--color-bg-card)] border border-[var(--color-border)] p-4 flex flex-col rounded-lg group">
+            devlogGrid.innerHTML = devlogData.map((entry, index) => `
+              <div class="sound-interactive interactive-rainbow bg-[var(--color-bg-card)] border border-[var(--color-border)] p-4 flex flex-col rounded-lg group cursor-pointer hover:shadow-lg transition-all duration-300" data-devlog-id="${entry.id}" data-devlog-index="${index}">
                 <div class="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden mb-3 bg-black">
-                  <img src="https://img.youtube.com/vi/${entry.videoId}/hqdefault.jpg" alt="Thumbnail for ${entry.title}" class="w-full h-full object-cover">
+                  <img src="https://img.youtube.com/vi/${entry.videoId}/hqdefault.jpg" alt="Thumbnail for ${entry.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                 </div>
                 <p class="text-xs text-gray-500 mb-2">${entry.date}</p>
                 <h4 class="font-bold text-md text-white mb-3 uppercase tracking-wide flex-grow">${entry.title}</h4>
-                <p class="text-gray-400 text-sm mb-3">${entry.text}</p>
-                <a href="https://www.youtube.com/watch?v=${entry.videoId}" target="_blank" class="text-indigo-400 text-sm font-semibold hover:text-indigo-300 mt-auto">Watch Video &rarr;</a>
+                <p class="text-gray-400 text-sm">${entry.text}</p>
               </div>
             `).join('');
+            
+            // Add proper event listeners to devlog cards
+            setTimeout(() => {
+              const devlogCards = devlogGrid.querySelectorAll('[data-devlog-id]');
+              devlogCards.forEach(card => {
+                const devlogId = card.dataset.devlogId;
+                const targetUrl = `/posts/devlog-${devlogId}/`;
+                
+                card.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  console.log('🎯 Devlog card clicked:', devlogId, 'URL:', targetUrl);
+                  
+                  // Store the current page URL for back navigation
+                  const currentUrl = window.location.href;
+                  const currentTitle = document.title;
+                  console.log('📝 Storing navigation history from portraits:', currentUrl, currentTitle);
+                  sessionStorage.setItem('last-page-url', currentUrl);
+                  sessionStorage.setItem('last-page-title', currentTitle);
+                  
+                  // Verify it was stored
+                  console.log('✅ Verification - stored URL:', sessionStorage.getItem('last-page-url'));
+                  console.log('✅ Verification - stored title:', sessionStorage.getItem('last-page-title'));
+                  
+                  // Use page transition if available, otherwise fall back to direct navigation
+                  if (typeof PageTransition !== 'undefined' && PageTransition.navigateToPage) {
+                    console.log('✨ Using PageTransition.navigateToPage');
+                    PageTransition.navigateToPage(targetUrl);
+                  } else {
+                    console.log('⚠️ PageTransition not available, using direct navigation');
+                    window.location.href = targetUrl;
+                  }
+                });
+              });
+              
+              // Re-initialize interactive effects for new devlog elements
+              if (typeof InteractiveEffects !== 'undefined') {
+                InteractiveEffects.init();
+              }
+            }, 150);
           }
 
           // Remove any existing event listeners to prevent duplicates
@@ -1628,15 +1805,27 @@
         },
         
         animateCameraForPage(pageId) {
-          // Define camera positions for different pages (more dynamic than original)
-          const cameraPositions = {
+          // Define base camera positions for different pages
+          const baseCameraPositions = {
             'hero': { x: 0, y: 0, z: 2 },
             'work': { x: -2, y: 1, z: 3 },
             'about': { x: 2, y: -1, z: 4 },
             'blog': { x: 0, y: 2, z: 3 }
           };
           
-          const targetPos = cameraPositions[pageId] || cameraPositions['hero'];
+          const basePos = baseCameraPositions[pageId] || baseCameraPositions['hero'];
+          
+          // Add randomization for more dynamic transitions
+          const randomFactor = 0.5; // How much randomization to apply
+          const distanceMultiplier = 1 + (Math.random() - 0.5) * 1.0; // 0.5x to 1.5x distance
+          
+          const targetPos = {
+            x: basePos.x + (Math.random() - 0.5) * randomFactor * 2,
+            y: basePos.y + (Math.random() - 0.5) * randomFactor * 2,
+            z: basePos.z * distanceMultiplier + (Math.random() - 0.5) * randomFactor
+          };
+          
+          console.log('🎯 Randomized camera target for', pageId, 'base:', basePos, 'randomized:', targetPos);
           
           if (ThreeDBackground && ThreeDBackground.cameraTargetPosition) {
             // Smooth camera transition over 1 second (faster like original)
@@ -1719,6 +1908,36 @@
       console.log('⚙️ Initializing page-specific scripts...');
       PageTransition.initializePageSpecificScripts();
       
+      // Initialize contact dropdown functionality
+      console.log('📞 Initializing contact dropdowns...');
+      const contactDropdownBtn = document.getElementById('contact-dropdown-btn');
+      const contactDropdown = document.getElementById('contact-dropdown');
+      const mobileContactDropdownBtn = document.getElementById('mobile-contact-dropdown-btn');
+      const mobileContactDropdown = document.getElementById('mobile-contact-dropdown');
+      
+      if (contactDropdownBtn && contactDropdown) {
+        contactDropdownBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          contactDropdown.classList.toggle('hidden');
+          soundEngine.playClickSound();
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!contactDropdownBtn.contains(e.target) && !contactDropdown.contains(e.target)) {
+            contactDropdown.classList.add('hidden');
+          }
+        });
+      }
+      
+      if (mobileContactDropdownBtn && mobileContactDropdown) {
+        mobileContactDropdownBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          mobileContactDropdown.classList.toggle('hidden');
+          soundEngine.playClickSound();
+        });
+      }
+      
       // Set initial camera position based on current page  
       const currentPath = window.location.pathname;
       let currentPage = 'hero';
@@ -1755,5 +1974,26 @@
       }
     });
   </script>
+
+  <!-- Footer with social links -->
+  <footer class="mt-16 py-8 border-t border-gray-800 text-center">
+    <div class="flex justify-center space-x-6">
+      <a href="https://www.youtube.com/@MixedRealityMusician" target="_blank" class="text-gray-400 hover:text-white transition-colors" aria-label="YouTube">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" clip-rule="evenodd"></path>
+        </svg>
+      </a>
+      <a href="https://github.com/tgraves719" target="_blank" class="text-gray-400 hover:text-white transition-colors" aria-label="GitHub">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clip-rule="evenodd"></path>
+        </svg>
+      </a>
+      <a href="https://www.linkedin.com/in/thomas-graves-trumpet/" target="_blank" class="text-gray-400 hover:text-white transition-colors" aria-label="LinkedIn">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M16.338 16.338H13.67V12.16c0-.995-.017-2.277-1.387-2.277-1.39 0-1.601 1.086-1.601 2.207v4.248H8.014v-8.59h2.559v1.174h.037c.356-.675 1.227-1.387 2.526-1.387 2.703 0 3.203 1.778 3.203 4.092v4.711zM5.005 6.575a1.548 1.548 0 11-.003-3.096 1.548 1.548 0 01.003 3.096zm-1.337 9.763H6.34v-8.59H3.667v8.59zM17.668 1H2.328C1.595 1 1 1.581 1 2.298v15.403C1 18.418 1.595 19 2.328 19h15.34c.734 0 1.332-.582 1.332-1.299V2.298C19 1.581 18.402 1 17.668 1z" clip-rule="evenodd"></path>
+        </svg>
+      </a>
+    </div>
+  </footer>
 </body>
 </html>
